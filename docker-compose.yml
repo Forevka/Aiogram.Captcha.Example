@@ -2,6 +2,8 @@ version: "3"
 
 services:
   bot_service:
+    depends_on: 
+      - redis
     build:
       context: .
     env_file:
@@ -9,6 +11,8 @@ services:
     command: ["python3", "bot.py"]
     
   web_service:
+    depends_on: 
+      - redis
     build:
       context: .
     env_file:
@@ -16,3 +20,23 @@ services:
     command: ["uvicorn", "web:app", "--host", "0.0.0.0", "--port", "${INTERNAL_WEB_PORT}"]
     ports:
       - "80:${INTERNAL_WEB_PORT}"
+
+  redis:
+    image: bitnami/redis:latest
+    environment: 
+      - ALLOW_EMPTY_PASSWORD=yes
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-data:/bitnami/redis/data
+
+  redis-browser:
+    depends_on: 
+      - redis
+    image: marian/rebrow
+    ports: 
+      - "5001:5001"
+
+
+volumes:
+  redis-data:
