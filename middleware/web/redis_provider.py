@@ -1,3 +1,4 @@
+from config import REDIS_HOST
 from typing import Awaitable, Callable
 
 from aiogram.contrib.fsm_storage.redis import RedisStorage2
@@ -11,7 +12,7 @@ class RedisProviderMiddleware(BaseHTTPMiddleware):
         app: ASGIApp,
     ) -> None:
         super().__init__(app)
-        self.storage = RedisStorage2(db=8, prefix='captcha_service')
+        self.storage = RedisStorage2(host=REDIS_HOST, db=8, prefix='captcha_service',)
 
     async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
         request.state.storage = self.storage

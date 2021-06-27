@@ -1,3 +1,4 @@
+from config import REDIS_HOST
 from typing import Any
 
 from aiogram.contrib.fsm_storage.redis import RedisStorage2
@@ -11,7 +12,7 @@ class RedisProviderMiddleware(LifetimeControllerMiddleware):
 
     def __init__(self,):
         super(RedisProviderMiddleware, self).__init__()
-        self.storage = RedisStorage2(db=8, prefix='captcha_service')
+        self.storage = RedisStorage2(host=REDIS_HOST, db=8, prefix='captcha_service',)
 
     async def pre_process(self, message: Any, data: dict, *args, **kwargs,):
         data['storage'] = self.storage
