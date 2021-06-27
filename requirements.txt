@@ -1,3 +1,6 @@
-aiogram
 fastapi
 uvicorn
+aiofiles
+jinja2
+aiogram
+aiohttp
