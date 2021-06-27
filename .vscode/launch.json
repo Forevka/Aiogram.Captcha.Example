@@ -5,11 +5,27 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Текущий файл",
+            "name": "Python: Bot",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/bot.py",
-            "console": "integratedTerminal"
-        }
+            "console": "integratedTerminal",
+            "env": {
+                "TOKEN": "666922879:AAEWkOwKYH-Sz7pBm9fLtXDlDV1fSGiNbwo",
+                "ENVIRONMENT": "debug"
+            }
+        },
+        {
+            "name": "Python: API",
+            "type": "python",
+            "module": "uvicorn",
+            "request": "launch",
+            "console": "integratedTerminal",
+            "args": ["web:app","--reload"],
+            "env": {
+                "TOKEN": "666922879:AAEWkOwKYH-Sz7pBm9fLtXDlDV1fSGiNbwo",
+                "ENVIRONMENT": "debug"
+            },
+        },
     ]
 }
