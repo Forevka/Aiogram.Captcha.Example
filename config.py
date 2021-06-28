@@ -8,6 +8,8 @@ RECAPTCHA_PRIVATE_KEY = getenv('RECAPTCHA_PRIVATE_KEY', '6LeIxAcTAAAAAGG-vFI1TnR
 
 HOST = getenv('HOST', '')
 CAPTCHA_ROUTE = getenv('CAPTCHA_ROUTE', '')
+PROXY_PREFIX = getenv('PROXY_PREFIX', '')
+
 REDIS_HOST = getenv('REDIS_HOST', 'redis')
 
 def is_debug() -> bool:

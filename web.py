@@ -99,7 +99,7 @@ async def validate_captcha_page(request: Request, validation_model: RecaptchaVal
             )
 
 app = FastAPI(
-    root_path='' if is_debug() else '/api',
+    root_path='' if is_debug() else '/api/captcha',
 )
 
 templates = Jinja2Templates(directory="templates")
