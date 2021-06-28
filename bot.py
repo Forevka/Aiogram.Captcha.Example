@@ -2,41 +2,96 @@ import logging
 from datetime import datetime, timedelta
 from urllib.parse import quote
 
-from aiogram import Bot, Dispatcher, executor, types
-from aiogram.contrib.fsm_storage.redis import RedisStorage2
-from aiogram.contrib.middlewares.logging import LoggingMiddleware
+from aiogram import Bot, Dispatcher, types, F
+from aiogram.dispatcher.fsm.context import FSMContext
+from aiogram.dispatcher.fsm.storage.redis import RedisStorage
+from aiogram.types.chat_permissions import ChatPermissions
+from aioredis import Redis
 
-from config import CAPTCHA_ROUTE, HOST, PROXY_PREFIX, TOKEN
-from middleware.bot.redis_provider import RedisProviderMiddleware
+from config import CAPTCHA_ROUTE, HOST, PROXY_PREFIX, REDIS_HOST, TOKEN, INVALIDATE_STATE_MINUTES
+from middleware.bot.captcha_storage_provider import CaptchaStorageProviderMiddleware
 from utils import generate_user_secret
+import html
+from asyncio import gather
 
 logging.basicConfig(level=logging.INFO)
 
-bot = Bot(token=TOKEN)
+dp = Dispatcher()
+dp.update.middleware(
+    CaptchaStorageProviderMiddleware(
+        storage=RedisStorage(
+            Redis(host=REDIS_HOST, db=8,),
+            prefix='captcha_service',
+        )
+    )
+)
 
-dp = Dispatcher(bot)
-dp.middleware.setup(LoggingMiddleware())
-dp.middleware.setup(RedisProviderMiddleware())
 
-
-@dp.message_handler(commands=['start', 'captcha', ])
+@dp.message(commands={'start', 'captcha', })
 async def cmd_start(message: types.Message):
-    await message.bot.send_game(message.chat.id, 'captcha',)
+    await message.answer_game('captcha',)
 
 
-@dp.callback_query_handler()
-async def callback_vote_action(query: types.CallbackQuery, storage: RedisStorage2):
-    user_secret_data = await storage.get_data(chat=query.from_user.id, user=query.from_user.id,)
+def is_need_to_pass_captcha(user_data: dict):
+    if (not user_data):
+        return True
 
-    if (user_secret_data.get('passed_time', 0) == 0 or datetime.utcnow() > (datetime.fromtimestamp(user_secret_data.get('passed_time')) + timedelta(minutes=1))):
-        user_secrets = generate_user_secret()
+    passed_at = user_data.get('passed_time', 0)
+    return passed_at == 0 or datetime.utcnow() > (datetime.fromtimestamp(passed_at) + timedelta(minutes=INVALIDATE_STATE_MINUTES))
+
+
+@dp.message(F.content_type == 'new_chat_members')
+async def chat_member_status_change(message: types.Message, captcha_storage: RedisStorage, bot: Bot):
+    chat_admins = await bot.get_chat_administrators(message.chat.id)
+    if (any((i for i in chat_admins if all([i.user.id == bot.id, i.can_restrict_members])))):
+        for member in message.new_chat_members:
+            user_data = await captcha_storage.get_data(bot, member.id, member.id)
+            user_secret_data = user_data.get('secret', {})
+            user_chats = user_data.get('chats', {})
+
+            if any([is_need_to_pass_captcha(user_secret_data), str(message.chat.id) not in user_chats]):
+                hey_msg = await message.answer(f'Hey, <a href="tg://user?id={member.id}">{html.escape(member.first_name, quote=False)}</a> please pass the captcha!', parse_mode='HTML')
+                game_msg = await message.answer_game('captcha',)
+                await bot.restrict_chat_member(message.chat.id, member.id, ChatPermissions(**{
+                    "can_send_messages": False,
+                    "can_send_media_messages": False,
+                    "can_send_polls": False,
+                    "can_send_other_messages": False,
+                    "can_add_web_page_previews": False,
+                    "can_change_info": False,
+                    "can_invite_users": False,
+                    "can_pin_messages": False,
+                }), until_date=datetime.utcnow() + timedelta(days=365),)
+
+                user_chats[message.chat.id] = [
+                    hey_msg.message_id,
+                    game_msg.message_id,
+                ]
+
+                user_data['chats'] = user_chats
+
+                await captcha_storage.set_data(bot, member.id, member.id, user_data,)
     else:
-        user_secrets = user_secret_data
+        gather(
+            *[bot.send_message(i.user.id, f'I`m not admin in chat {message.chat.id}') for i in chat_admins]
+        )
 
-    await storage.set_data(chat=query.from_user.id, user=query.from_user.id, data=user_secrets,)
 
-    await query.answer(url=f"{HOST}{PROXY_PREFIX}{CAPTCHA_ROUTE}?user_id={query.from_user.id}&first_name={quote(query.from_user.first_name)}",)
+@dp.callback_query(F.game_short_name == 'captcha')
+async def send_recaptcha(query: types.CallbackQuery, captcha_storage: RedisStorage, captcha_state: FSMContext):
+    user_data = await captcha_storage.get_data(bot, query.from_user.id, query.from_user.id,)
+
+    user_secret_data = user_data.get('secret', {})
+
+    if (user_secret_data.get('passed_time', 0) == 0 or datetime.utcnow() > (datetime.fromtimestamp(user_secret_data.get('passed_time')) + timedelta(minutes=INVALIDATE_STATE_MINUTES))):
+        user_data['secret'] = generate_user_secret()
+
+    await captcha_storage.set_data(bot, query.from_user.id, query.from_user.id, user_data,)
+
+    await query.answer(url=f"{HOST}{PROXY_PREFIX}{CAPTCHA_ROUTE}?user_id={query.from_user.id}&first_name={quote(query.from_user.first_name)}&public_key={user_data['secret']['public_key']}",)
 
 
 if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True)
+    bot = Bot(token=TOKEN)
+
+    dp.run_polling(bot)

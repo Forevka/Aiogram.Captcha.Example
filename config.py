@@ -12,5 +12,7 @@ PROXY_PREFIX = getenv('PROXY_PREFIX', '')
 
 REDIS_HOST = getenv('REDIS_HOST', 'redis')
 
+INVALIDATE_STATE_MINUTES = 1
+
 def is_debug() -> bool:
     return ENVIRONMENT == 'debug'

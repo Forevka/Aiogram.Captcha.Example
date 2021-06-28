@@ -2,6 +2,6 @@ fastapi
 uvicorn
 aiofiles
 jinja2
-aiogram
+git+git://github.com/aiogram/aiogram/@dev-3.x
 aiohttp
-aioredis
+aioredis==2.0.0a1

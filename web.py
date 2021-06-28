@@ -1,34 +1,43 @@
-from aiogram.bot.bot import Bot
-from aiogram.contrib.fsm_storage.redis import RedisStorage2
+import datetime
+from asyncio import gather
+from contextlib import suppress
+from aiogram.types import ChatPermissions
 
 import aiohttp
-from fastapi import FastAPI, Request
+from itertools import chain
+from aiogram.utils.exceptions.base import TelegramAPIError
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from starlette.responses import JSONResponse, Response
-from middleware.web.redis_provider import RedisProviderMiddleware
-import datetime
 
-from config import ENVIRONMENT, RECAPTCHA_PRIVATE_KEY, RECAPTCHA_PUBLIC_KEY, TOKEN, is_debug
+from config import (ENVIRONMENT, INVALIDATE_STATE_MINUTES,
+                    RECAPTCHA_PRIVATE_KEY, RECAPTCHA_PUBLIC_KEY, TOKEN,
+                    is_debug)
+from dependency_resolvers.aiogram_bot_to_fastapi import AiogramBot
+from dependency_resolvers.aiogram_fsm_context_to_fastapi import \
+    AiogramFSMContext
+from middleware.web.bot_provider import BotProviderMiddleware
+from middleware.web.captcha_storage_provider import \
+    CaptchaStorageProviderMiddleware
 from models import RecaptchaSiteverifyModel, RecaptchaValidationModel
 from utils import generate_user_secret, verify_hash
 
-bot = Bot(token=TOKEN)
 
-async def get_captcha_page(request: Request, user_id: int, first_name: str) -> Response:
-    user_storage: RedisStorage2 = request.state.storage
-
-    user_secret_data = await user_storage.get_data(chat=user_id, user=user_id)
+async def get_captcha_page(request: Request, user_id: int, first_name: str, public_key: str = '', storage: AiogramFSMContext = Depends(AiogramFSMContext)) -> Response:
+    user_data = await storage.user_context.get_data()
+    user_secret_data = user_data.get('secret', {})
 
     passed_at = user_secret_data.get('passed_time', 0)
 
     if (passed_at > 1):
-        pass_again = datetime.datetime.fromtimestamp(passed_at) + datetime.timedelta(minutes=1)
+        pass_again = datetime.datetime.fromtimestamp(passed_at) + datetime.timedelta(minutes=INVALIDATE_STATE_MINUTES)
         if (datetime.datetime.utcnow() > pass_again):
             user_secret_data = generate_user_secret()
+            user_data['secret'] = user_secret_data
 
-            await user_storage.set_data(chat=user_id, user=user_id, data=user_secret_data)
+            await storage.user_context.set_data(user_data)
         else:
             return templates.TemplateResponse("passed.html", {
                 "request": request,
@@ -37,6 +46,12 @@ async def get_captcha_page(request: Request, user_id: int, first_name: str) -> R
                 "pass_again": pass_again,
                 "current_utc_time": datetime.datetime.utcnow(),
             })
+
+    if (public_key != user_secret_data['public_key']):
+        return templates.TemplateResponse("wrong_origin.html", {
+            "request": request,
+        })
+
 
     return templates.TemplateResponse("captcha.html", {
         "request": request,
@@ -47,10 +62,9 @@ async def get_captcha_page(request: Request, user_id: int, first_name: str) -> R
     })
 
 
-async def validate_captcha_page(request: Request, validation_model: RecaptchaValidationModel) -> Response:
-    user_storage: RedisStorage2 = request.state.storage
-
-    user_secret_data = await user_storage.get_data(chat=validation_model.user_id, user=validation_model.user_id)
+async def validate_captcha_page(request: Request, validation_model: RecaptchaValidationModel, storage: AiogramFSMContext = Depends(AiogramFSMContext), bot: AiogramBot = Depends(AiogramBot)) -> Response:
+    user_data = await storage.user_context.get_data()
+    user_secret_data = user_data.get('secret', {})
 
     if not all([
         user_secret_data, verify_hash(user_secret_data['private_key'],
@@ -73,9 +87,29 @@ async def validate_captcha_page(request: Request, validation_model: RecaptchaVal
                 if (verify_result.success):
                     user_secret_data['passed_time'] = datetime.datetime.utcnow().timestamp()
 
-                    await bot.send_message(validation_model.user_id, 'Turing test succesfully passed')
+                    user_data['secret'] = user_secret_data
+                    with suppress(TelegramAPIError):
+                        tasks = [
+                            [
+                                *[
+                                    bot.bot.delete_message(chat_id, msg_id) for msg_id in msg_ids
+                                ], 
+                                bot.bot.restrict_chat_member(chat_id, validation_model.user_id, ChatPermissions(**{
+                                    "can_send_messages": True,
+                                    "can_send_media_messages": True,
+                                    "can_send_polls": True,
+                                    "can_send_other_messages": True,
+                                    "can_add_web_page_previews": True,
+                                    "can_change_info": True,
+                                    "can_invite_users": True,
+                                    "can_pin_messages": True,
+                                }))
+                            ] for chat_id, msg_ids in user_data['chats'].items()
+                        ]
+                        flatten_tasks = list(chain(*tasks)) + [bot.bot.send_message(validation_model.user_id, 'Turing test succesfully passed')]
+                        gather(*flatten_tasks)
 
-                    await user_storage.set_data(chat=validation_model.user_id, user=validation_model.user_id, data=user_secret_data)
+                    await storage.user_context.set_data(data=user_data)
 
                     return JSONResponse(  # everything is ok
                         status_code=200,
@@ -113,7 +147,11 @@ app.add_middleware(
 )
 
 app.add_middleware(
-    RedisProviderMiddleware,
+    BotProviderMiddleware,
+)
+
+app.add_middleware(
+    CaptchaStorageProviderMiddleware,
 )
 
 
