@@ -51,7 +51,7 @@ async def chat_member_status_change(message: types.Message, captcha_storage: Red
 
             if any([is_need_to_pass_captcha(user_secret_data), str(message.chat.id) not in user_chats]):
                 hey_msg = await message.answer(f'Hey, <a href="tg://user?id={member.id}">{html.escape(member.first_name, quote=False)}</a> please pass the captcha!', parse_mode='HTML')
-                game_msg = await message.answer_game('captcha',)
+                game_msg = await message.reply_game('captcha',)
                 await bot.restrict_chat_member(message.chat.id, member.id, ChatPermissions(**{
                     "can_send_messages": False,
                     "can_send_media_messages": False,
@@ -79,16 +79,24 @@ async def chat_member_status_change(message: types.Message, captcha_storage: Red
 
 @dp.callback_query(F.game_short_name == 'captcha')
 async def send_recaptcha(query: types.CallbackQuery, captcha_storage: RedisStorage, captcha_state: FSMContext):
-    user_data = await captcha_storage.get_data(bot, query.from_user.id, query.from_user.id,)
+    user = query.from_user
+
+    if (query.message and query.message.reply_to_message):
+        if (user.id != query.message.reply_to_message.from_user.id):
+            return await query.answer('This is not for you.', show_alert=False,)
+
+        user = query.message.reply_to_message.from_user
+
+    user_data = await captcha_storage.get_data(bot, user.id, user.id,)
 
     user_secret_data = user_data.get('secret', {})
 
     if (user_secret_data.get('passed_time', 0) == 0 or datetime.utcnow() > (datetime.fromtimestamp(user_secret_data.get('passed_time')) + timedelta(minutes=INVALIDATE_STATE_MINUTES))):
         user_data['secret'] = generate_user_secret()
 
-    await captcha_storage.set_data(bot, query.from_user.id, query.from_user.id, user_data,)
+    await captcha_storage.set_data(bot, user.id, user.id, user_data,)
 
-    await query.answer(url=f"{HOST}{PROXY_PREFIX}{CAPTCHA_ROUTE}?user_id={query.from_user.id}&first_name={quote(query.from_user.first_name)}&public_key={user_data['secret']['public_key']}",)
+    await query.answer(url=f"{HOST}{PROXY_PREFIX}{CAPTCHA_ROUTE}?user_id={user.id}&first_name={quote(user.first_name)}&public_key={user_data['secret']['public_key']}",)
 
 
 if __name__ == '__main__':

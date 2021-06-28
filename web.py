@@ -104,7 +104,7 @@ async def validate_captcha_page(request: Request, validation_model: RecaptchaVal
                                     "can_invite_users": True,
                                     "can_pin_messages": True,
                                 }))
-                            ] for chat_id, msg_ids in user_data['chats'].items()
+                            ] for chat_id, msg_ids in user_data.get('chats', {}).items()
                         ]
                         flatten_tasks = list(chain(*tasks)) + [bot.bot.send_message(validation_model.user_id, 'Turing test succesfully passed')]
                         gather(*flatten_tasks)
