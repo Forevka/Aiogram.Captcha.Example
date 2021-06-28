@@ -9,3 +9,6 @@ RECAPTCHA_PRIVATE_KEY = getenv('RECAPTCHA_PRIVATE_KEY', '6LeIxAcTAAAAAGG-vFI1TnR
 HOST = getenv('HOST', '')
 CAPTCHA_ROUTE = getenv('CAPTCHA_ROUTE', '')
 REDIS_HOST = getenv('REDIS_HOST', 'redis')
+
+def is_debug() -> bool:
+    return ENVIRONMENT == 'debug'

@@ -10,7 +10,7 @@ from starlette.responses import JSONResponse, Response
 from middleware.web.redis_provider import RedisProviderMiddleware
 import datetime
 
-from config import RECAPTCHA_PRIVATE_KEY, RECAPTCHA_PUBLIC_KEY, TOKEN
+from config import ENVIRONMENT, RECAPTCHA_PRIVATE_KEY, RECAPTCHA_PUBLIC_KEY, TOKEN, is_debug
 from models import RecaptchaSiteverifyModel, RecaptchaValidationModel
 from utils import generate_user_secret, verify_hash
 
@@ -98,7 +98,9 @@ async def validate_captcha_page(request: Request, validation_model: RecaptchaVal
                 }
             )
 
-app = FastAPI()
+app = FastAPI(
+    root_path='' if is_debug() else '/api',
+)
 
 templates = Jinja2Templates(directory="templates")
 
