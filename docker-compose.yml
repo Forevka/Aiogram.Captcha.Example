@@ -2,6 +2,7 @@ version: "3"
 
 services:
   bot_service:
+    image: forevka/recaptcha-bot
     depends_on: 
       - redis
     build:
@@ -11,6 +12,7 @@ services:
     command: ["python3", "bot.py"]
     
   web_service:
+    image: forevka/recaptcha-bot
     depends_on: 
       - redis
     build:
