@@ -16,7 +16,7 @@ class CaptchaStorageProviderMiddleware(FSMContextMiddleware):
         context = self.resolve_event_context(bot, data)
         data["captcha_storage"] = self.storage
         if context:
-            data.update({"captcha_state": context, "raw_state": await context.get_state()})
+            data.update({"captcha_state": context, "raw_captcha_state": await context.get_state()})
             if self.isolate_events:
                 async with self.storage.lock(
                     bot=bot, chat_id=context.chat_id, user_id=context.user_id
