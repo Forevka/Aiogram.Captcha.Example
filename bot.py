@@ -28,7 +28,7 @@ dp.update.middleware(
 )
 
 
-@dp.message(commands={'start', 'help', })
+@dp.message(commands={'start', 'help',})
 async def cmd_start(message: types.Message):
     await message.answer(
         'Привет, я капча бот.\n\nТы можешь пригласить меня в свою группу что-бы посмотреть как я работаю или войти в тестовую - @reCaptchaTest\n<a href="https://github.com/Forevka/Aiogram.Captcha.Example">Исходный код</a>\nКоманды:\n/captcha - пройти капчу в лс',
@@ -36,6 +36,9 @@ async def cmd_start(message: types.Message):
         disable_web_page_preview=True,
     )
 
+@dp.message(commands={'captcha',})
+async def cmd_start(message: types.Message, bot: Bot):
+    await bot.send_game('captcha',)
 
 @dp.message(F.content_type == 'new_chat_members')
 async def chat_member_status_change(message: types.Message, captcha_storage: RedisStorage, bot: Bot):
