@@ -38,7 +38,7 @@ async def cmd_start(message: types.Message):
 
 @dp.message(commands={'captcha',})
 async def cmd_start(message: types.Message, bot: Bot):
-    await bot.send_game('captcha',)
+    await bot.send_game(message.chat.id, 'captcha',)
 
 @dp.message(F.content_type == 'new_chat_members')
 async def chat_member_status_change(message: types.Message, captcha_storage: RedisStorage, bot: Bot):
