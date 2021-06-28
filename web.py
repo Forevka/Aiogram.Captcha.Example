@@ -1,10 +1,10 @@
 import datetime
 from asyncio import gather
 from contextlib import suppress
-from aiogram.types import ChatPermissions
+from itertools import chain
 
 import aiohttp
-from itertools import chain
+from aiogram.types import ChatPermissions
 from aiogram.utils.exceptions.base import TelegramAPIError
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware

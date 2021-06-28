@@ -6,7 +6,6 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
-
 class BotProviderMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,

@@ -1,6 +1,8 @@
-from datetime import datetime
 import hashlib
+from datetime import datetime, timedelta
 from secrets import token_urlsafe
+
+from config import INVALIDATE_STATE_MINUTES
 
 
 def calculate_hash(private_key: str, public_key: str,) -> str:
@@ -14,6 +16,7 @@ def calculate_hash(private_key: str, public_key: str,) -> str:
 def verify_hash(private_key: str, public_key: str, our_hash: str) -> bool:
     return calculate_hash(private_key, public_key,) == our_hash
 
+
 def generate_user_secret() -> dict:
     user_private_key = token_urlsafe(16)
     user_public_key = token_urlsafe(16)
@@ -25,3 +28,11 @@ def generate_user_secret() -> dict:
         'generated_time': datetime.utcnow().timestamp(),
         'passed_time': 0,
     }
+    
+    
+def is_need_to_pass_captcha(user_data: dict):
+    if (not user_data):
+        return True
+
+    passed_at = user_data.get('passed_time', 0)
+    return passed_at == 0 or datetime.utcnow() > (datetime.fromtimestamp(passed_at) + timedelta(minutes=INVALIDATE_STATE_MINUTES))

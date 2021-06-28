@@ -1,4 +1,4 @@
-from typing import (Any, Awaitable, Callable, Dict, cast)
+from typing import Any, Awaitable, Callable, Dict, cast
 
 from aiogram import Bot
 from aiogram.dispatcher.fsm.middleware import FSMContextMiddleware

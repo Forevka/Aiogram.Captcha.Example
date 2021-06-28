@@ -1,18 +1,19 @@
+import html
 import logging
+from asyncio import gather
 from datetime import datetime, timedelta
 from urllib.parse import quote
 
-from aiogram import Bot, Dispatcher, types, F
+from aiogram import Bot, Dispatcher, F, types
 from aiogram.dispatcher.fsm.context import FSMContext
 from aiogram.dispatcher.fsm.storage.redis import RedisStorage
 from aiogram.types.chat_permissions import ChatPermissions
 from aioredis import Redis
 
-from config import CAPTCHA_ROUTE, HOST, PROXY_PREFIX, REDIS_HOST, TOKEN, INVALIDATE_STATE_MINUTES
+from config import (CAPTCHA_ROUTE, HOST, INVALIDATE_STATE_MINUTES,
+                    PROXY_PREFIX, REDIS_HOST, TOKEN)
 from middleware.bot.captcha_storage_provider import CaptchaStorageProviderMiddleware
-from utils import generate_user_secret
-import html
-from asyncio import gather
+from utils import generate_user_secret, is_need_to_pass_captcha
 
 logging.basicConfig(level=logging.INFO)
 
@@ -27,17 +28,13 @@ dp.update.middleware(
 )
 
 
-@dp.message(commands={'start', 'captcha', })
+@dp.message(commands={'start', 'help', })
 async def cmd_start(message: types.Message):
-    await message.answer_game('captcha',)
-
-
-def is_need_to_pass_captcha(user_data: dict):
-    if (not user_data):
-        return True
-
-    passed_at = user_data.get('passed_time', 0)
-    return passed_at == 0 or datetime.utcnow() > (datetime.fromtimestamp(passed_at) + timedelta(minutes=INVALIDATE_STATE_MINUTES))
+    await message.answer(
+        'Привет, я капча бот.\n\nТы можешь пригласить меня в свою группу что-бы посмотреть как я работаю или войти в тестовую - @reCaptchaTest\n<a href="https://github.com/Forevka/Aiogram.Captcha.Example">Исходный код</a>\nКоманды:\n/captcha - пройти капчу в лс',
+        parse_mode='HTML', 
+        disable_web_page_preview=True,
+    )
 
 
 @dp.message(F.content_type == 'new_chat_members')
@@ -73,7 +70,7 @@ async def chat_member_status_change(message: types.Message, captcha_storage: Red
                 await captcha_storage.set_data(bot, member.id, member.id, user_data,)
     else:
         gather(
-            *[bot.send_message(i.user.id, f'I`m not admin in chat {message.chat.id}') for i in chat_admins]
+            *[bot.send_message(i.user.id, f'Я не администратор в этом чате: {message.chat.id}') for i in chat_admins]
         )
 
 
