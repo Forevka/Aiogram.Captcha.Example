@@ -87,7 +87,7 @@ async def validate_captcha_page(
                     return JSONResponse(  # everything is ok
                         status_code=200,
                         content={
-                            "detail": "Now you can close this tab",
+                            "detail": "Now you can close this tab. Or it will close in: {0}",
                         },
                     )
 

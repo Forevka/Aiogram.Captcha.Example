@@ -1,11 +1,26 @@
 <head>
     <script>
+        // First, checks if it isn't implemented yet.
+        if (!String.prototype.format) {
+            String.prototype.format = function() {
+                var args = arguments;
+                return this.replace(/{(\d+)}/g, function(match, number) { 
+                    return typeof args[number] != 'undefined'
+                    ? args[number]
+                    : match
+                    ;
+                });
+            };
+        }
+    </script>
+    <script>
         // you need to replace this code
         // with modern version, i've recommend you 
         // to use smth like axios
         function onSubmit(token) {
             const userId = {{ user_id }};
-            let publicKey = "{{ user_public_key }}";
+            const publicKey = "{{ user_public_key }}";
+            let timeToClose = 3;
 
             const http = new XMLHttpRequest();
             const url = ''; // our fastapi webapi callback
@@ -20,12 +35,19 @@
                 {
                     const responseBody = JSON.parse(http.responseText)
 
-                    document.querySelector('#title').innerText = responseBody.detail;
+                    document.querySelector('#title').innerText = responseBody.detail.format(timeToClose);
                     if (http.status == 200) 
                     {
                         // document.querySelector('#captcha').remove();
                         // here we understand that everything is ok
+
+                        setInterval(() => {
+                            timeToClose = timeToClose - 1;
+                            if (timeToClose === 0) window.close();
+                            document.querySelector('#title').innerText = responseBody.detail.format(timeToClose);
+                        }, 1000)
                     }
+
                 }
             }
             const params = {
