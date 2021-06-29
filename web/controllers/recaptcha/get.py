@@ -12,7 +12,7 @@ from utils.security import generate_user_secret
 from web.templates import templates
 
 
-async def get_captcha_page(
+async def get_recaptcha_page(
     request: Request,
     user_id: int,
     first_name: str,
@@ -56,7 +56,7 @@ async def get_captcha_page(
         )
 
     return templates.TemplateResponse(
-        "captcha.html",
+        "captcha/recaptcha.html",
         {
             "request": request,
             "recaptcha_public_key": RECAPTCHA_PUBLIC_KEY,

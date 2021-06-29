@@ -1,5 +1,7 @@
-from web.controllers.captcha.post import validate_captcha_page
-from web.controllers.captcha.get import get_captcha_page
+from web.controllers.angle.post import validate_angle_page
+from web.controllers.angle.get import get_angle_page
+from web.controllers.recaptcha.get import get_recaptcha_page
+from web.controllers.recaptcha.post import validate_recaptcha_page
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,20 +30,34 @@ def register_middlewares(app: FastAPI):
     )
 
 
-
 def register_routes(app: FastAPI):
     app.add_api_route(
-        "/captcha",
-        get_captcha_page,
-        tags=["Captcha"],
+        "/recaptcha",
+        get_recaptcha_page,
+        tags=["reCaptcha"],
         methods=["GET"],
         response_class=HTMLResponse,
     )
 
     app.add_api_route(
-        "/captcha",
-        validate_captcha_page,
-        tags=["Captcha"],
+        "/recaptcha",
+        validate_recaptcha_page,
+        tags=["reCaptcha"],
+        methods=["POST"],
+    )
+
+    app.add_api_route(
+        "/angle",
+        get_angle_page,
+        tags=["Angle"],
+        methods=["GET"],
+        response_class=HTMLResponse,
+    )
+
+    app.add_api_route(
+        "/angle",
+        validate_angle_page,
+        tags=["Angle"],
         methods=["POST"],
     )
 
@@ -49,4 +65,3 @@ def register_routes(app: FastAPI):
 app = FastAPI(
     root_path="" if is_debug() else "/api/captcha",
 )
-

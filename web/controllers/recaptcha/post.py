@@ -19,7 +19,7 @@ from web.models.recaptcha_validation_model import RecaptchaValidationModel
 from utils.security import verify_hash
 
 
-async def validate_captcha_page(
+async def validate_recaptcha_page(
     request: Request,
     validation_model: RecaptchaValidationModel,
     storage: AiogramFSMContext = Depends(AiogramFSMContext),
