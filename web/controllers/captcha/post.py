@@ -88,6 +88,7 @@ async def validate_captcha_page(
                         status_code=200,
                         content={
                             "detail": "Now you can close this tab. Or it will close in: {0}",
+                            "redirectTo": bot.bot_link,
                         },
                     )
 
