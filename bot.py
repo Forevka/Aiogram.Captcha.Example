@@ -7,11 +7,10 @@ from urllib.parse import quote
 from aiogram import Bot, Dispatcher, F, types
 from aiogram.dispatcher.fsm.context import FSMContext
 from aiogram.dispatcher.fsm.storage.redis import RedisStorage
-from aiogram.types.chat_permissions import ChatPermissions
 from aioredis import Redis
 
 from config import (CAPTCHA_ROUTE, HOST, INVALIDATE_STATE_MINUTES,
-                    PROXY_PREFIX, REDIS_HOST, TOKEN)
+                    PROXY_PREFIX, REDIS_HOST, RESTRICT_ALL, TOKEN)
 from middleware.bot.captcha_storage_provider import CaptchaStorageProviderMiddleware
 from utils import generate_user_secret, is_need_to_pass_captcha
 
@@ -52,16 +51,7 @@ async def chat_member_status_change(message: types.Message, captcha_storage: Red
             if any([is_need_to_pass_captcha(user_secret_data), str(message.chat.id) not in user_chats]):
                 hey_msg = await message.answer(f'Hey, <a href="tg://user?id={member.id}">{html.escape(member.first_name, quote=False)}</a> please pass the captcha!', parse_mode='HTML')
                 game_msg = await message.reply_game('captcha',)
-                await bot.restrict_chat_member(message.chat.id, member.id, ChatPermissions(**{
-                    "can_send_messages": False,
-                    "can_send_media_messages": False,
-                    "can_send_polls": False,
-                    "can_send_other_messages": False,
-                    "can_add_web_page_previews": False,
-                    "can_change_info": False,
-                    "can_invite_users": False,
-                    "can_pin_messages": False,
-                }), until_date=datetime.utcnow() + timedelta(days=365),)
+                await bot.restrict_chat_member(message.chat.id, member.id, RESTRICT_ALL, until_date=datetime.utcnow() + timedelta(days=365),)
 
                 user_chats[message.chat.id] = [
                     hey_msg.message_id,
@@ -100,6 +90,7 @@ async def send_recaptcha(query: types.CallbackQuery, captcha_storage: RedisStora
 
 
 if __name__ == '__main__':
+
     bot = Bot(token=TOKEN)
 
     dp.run_polling(bot)

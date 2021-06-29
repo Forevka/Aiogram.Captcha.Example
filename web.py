@@ -13,7 +13,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.responses import JSONResponse, Response
 
 from config import (ENVIRONMENT, INVALIDATE_STATE_MINUTES,
-                    RECAPTCHA_PRIVATE_KEY, RECAPTCHA_PUBLIC_KEY, TOKEN,
+                    RECAPTCHA_PRIVATE_KEY, RECAPTCHA_PUBLIC_KEY, TOKEN, UNRESTRICT_ALL,
                     is_debug)
 from dependency_resolvers.aiogram_bot_to_fastapi import AiogramBot
 from dependency_resolvers.aiogram_fsm_context_to_fastapi import \
@@ -94,16 +94,7 @@ async def validate_captcha_page(request: Request, validation_model: RecaptchaVal
                                 *[
                                     bot.bot.delete_message(chat_id, msg_id) for msg_id in msg_ids
                                 ], 
-                                bot.bot.restrict_chat_member(chat_id, validation_model.user_id, ChatPermissions(**{
-                                    "can_send_messages": True,
-                                    "can_send_media_messages": True,
-                                    "can_send_polls": True,
-                                    "can_send_other_messages": True,
-                                    "can_add_web_page_previews": True,
-                                    "can_change_info": True,
-                                    "can_invite_users": True,
-                                    "can_pin_messages": True,
-                                }))
+                                bot.bot.restrict_chat_member(chat_id, validation_model.user_id, UNRESTRICT_ALL)
                             ] for chat_id, msg_ids in user_data.get('chats', {}).items()
                         ]
                         flatten_tasks = list(chain(*tasks)) + [bot.bot.send_message(validation_model.user_id, 'Turing test succesfully passed')]
