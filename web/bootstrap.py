@@ -1,3 +1,5 @@
+from web.controllers.hcaptcha.post import validate_hcaptcha_page
+from web.controllers.hcaptcha.get import get_hcaptcha_page
 from web.controllers.angle.post import validate_angle_page
 from web.controllers.angle.get import get_angle_page
 from web.controllers.recaptcha.get import get_recaptcha_page
@@ -58,6 +60,21 @@ def register_routes(app: FastAPI):
         "/angle",
         validate_angle_page,
         tags=["Angle"],
+        methods=["POST"],
+    )
+
+    app.add_api_route(
+        "/hcaptcha",
+        get_hcaptcha_page,
+        tags=["hCaptcha"],
+        methods=["GET"],
+        response_class=HTMLResponse,
+    )
+
+    app.add_api_route(
+        "/hcaptcha",
+        validate_hcaptcha_page,
+        tags=["hCaptcha"],
         methods=["POST"],
     )
 
