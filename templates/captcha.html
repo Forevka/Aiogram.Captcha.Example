@@ -44,11 +44,11 @@
                         setInterval(() => {
                             timeToClose = timeToClose - 1;
                             if (timeToClose === 0) {
-                                try {
-                                    window.close();
-                                } catch(error) {
+                                setTimeout(() => {
                                     document.location.href = responseBody.redirectTo;
-                                }
+                                }, 100)
+                                
+                                window.close();
                             }
                             document.querySelector('#title').innerText = responseBody.detail.format(timeToClose);
                         }, 1000)
