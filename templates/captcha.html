@@ -43,7 +43,10 @@
 
                         setInterval(() => {
                             timeToClose = timeToClose - 1;
-                            if (timeToClose === 0) window.close();
+                            if (timeToClose === 0) {
+                                document.location.href = "https://t.me/HumanFilterBot";
+                                //window.close();
+                            }
                             document.querySelector('#title').innerText = responseBody.detail.format(timeToClose);
                         }, 1000)
                     }
