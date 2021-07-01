@@ -7,6 +7,7 @@ services:
       - production
     depends_on: 
       - redis
+      - postgresql
     build:
       context: .
     env_file:
@@ -19,6 +20,7 @@ services:
       - production
     depends_on: 
       - redis
+      - postgresql
     build:
       context: .
     env_file:
@@ -48,6 +50,18 @@ services:
     ports: 
       - "5001:5001"
 
+  postgresql:
+    image: "postgres:12"
+    profiles:
+      - production
+    env_file:
+      - ./.env
+    ports:
+      - "5435:5432"
+    volumes:
+      - database-data:/var/lib/postgresql/data/
+
 
 volumes:
   redis-data:
+  database-data:
