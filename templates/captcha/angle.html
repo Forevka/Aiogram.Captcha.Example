@@ -1,84 +1,87 @@
-<head>
-    <link rel="stylesheet" href="https://unpkg.com/rverify@0.1.3/dist/RVerify.min.css"/>
-    <script src="https://unpkg.com/rverify@0.1.3/dist/RVerify.js"></script>
-    
-    <script>
-        // First, checks if it isn't implemented yet.
-        if (!String.prototype.format) {
-            String.prototype.format = function() {
-                var args = arguments;
-                return this.replace(/{(\d+)}/g, function(match, number) { 
-                    return typeof args[number] != 'undefined'
-                    ? args[number]
-                    : match
-                    ;
-                });
-            };
-        }
-    </script>
-    
-    <script>
-        const userId = {{ user_id }};
-        const publicKey = "{{ user_public_key }}";
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="https://unpkg.com/rverify@0.1.3/dist/RVerify.min.css"/>
+        <script src="https://unpkg.com/rverify@0.1.3/dist/RVerify.js"></script>
 
-        function onSubmit() {
-            const http = new XMLHttpRequest();
-            const url = ''; // our fastapi webapi callback
-            http.open('POST', '', true);
+        <script>
+            // First, checks if it isn't implemented yet.
+            if (!String.prototype.format) {
+                String.prototype.format = function() {
+                    var args = arguments;
+                    return this.replace(/{(\d+)}/g, function(match, number) { 
+                        return typeof args[number] != 'undefined'
+                        ? args[number]
+                        : match
+                        ;
+                    });
+                };
+            }
+        </script>
 
-            http.setRequestHeader('Content-type', 'application/json');
-            
-            // call a function when the state changes.
-            http.onreadystatechange = function() 
-            {
-                if(http.readyState == 4) 
+        <script>
+            const userId = {{ user_id }};
+            const publicKey = "{{ user_public_key }}";
+
+            function onSubmit() {
+                const http = new XMLHttpRequest();
+                const url = ''; // our fastapi webapi callback
+                http.open('POST', '', true);
+
+                http.setRequestHeader('Content-type', 'application/json');
+
+                // call a function when the state changes.
+                http.onreadystatechange = function() 
                 {
-                    const responseBody = JSON.parse(http.responseText)
-
-                    if (http.status == 200) 
+                    if(http.readyState == 4) 
                     {
-                        // document.querySelector('#captcha').remove();
-                        // here we understand that everything is ok
+                        const responseBody = JSON.parse(http.responseText)
 
-                        setTimeout(() => {
+                        if (http.status == 200) 
+                        {
+                            // document.querySelector('#captcha').remove();
+                            // here we understand that everything is ok
+
                             setTimeout(() => {
-                                document.location.href = responseBody.redirectTo;
-                            }, 100)
-                            
-                            window.close();
-                        }, 1500)
+                                setTimeout(() => {
+                                    document.location.href = responseBody.redirectTo;
+                                }, 100)
+
+                                window.close();
+                            }, 1500)
+                        }
+
                     }
-
                 }
+                const params = {
+                    'user_id': userId,
+                    'public_key': publicKey,
+                };
+
+                http.send(JSON.stringify(params));
             }
-            const params = {
-                'user_id': userId,
-                'public_key': publicKey,
-            };
 
-            http.send(JSON.stringify(params));
-        }
+            RVerify.configure({
+                tolerance: 10,
+                duration: 2000,
+                mask: 0.5,
+                title: "{{ first_name }}",
+                text: "Align the picture",
+                extra: "",
+                extraLink: "",
+                maskClosable: false,
+                album: {{ image_list|safe }}
+            })
 
-        RVerify.configure({
-            tolerance: 10,
-            duration: 2000,
-            mask: 0.5,
-            title: "{{ first_name }}",
-            text: "Align the picture",
-            extra: "",
-            extraLink: "",
-            maskClosable: false,
-            album: {{ image_list|safe }}
-        })
-
-    </script>
-</head>
-<body>
-    <script>
-        RVerify.action(function(res){
-            if (res === 1) {
-                onSubmit()
-            }
-        });
-    </script>    
-</body>
+        </script>
+    </head>
+    <body>
+        <script>
+            RVerify.action(function(res){
+                if (res === 1) {
+                    onSubmit()
+                }
+            });
+        </script>    
+    </body>
+</html>
