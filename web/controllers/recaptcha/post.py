@@ -2,6 +2,10 @@ import datetime
 from asyncio import gather
 from contextlib import suppress
 from itertools import chain
+from third_party.captcha.client import CaptchaClient
+
+from yarl import URL
+from web.utils.cleanup_chat_after_validation import cleanup_chat_after_validation
 
 import aiohttp
 from fastapi import Depends, Request
@@ -45,63 +49,38 @@ async def validate_recaptcha_page(
             },
         )
 
-    async with aiohttp.ClientSession() as session:
-        async with session.get(
-            "https://www.google.com/recaptcha/api/siteverify",
-            params={
-                "secret": RECAPTCHA_PRIVATE_KEY,
-                "response": validation_model.token,
-            },
-        ) as resp:
-            if resp.status == 200:
-                verify_result = RecaptchaSiteverifyModel(**await resp.json())
-                if verify_result.success:
-                    user_secret_data[
-                        "passed_time"
-                    ] = datetime.datetime.utcnow().timestamp()
+    async with CaptchaClient(URL("https://www.google.com/recaptcha/api/")) as client:
+        result = await client.validate_token(validation_model.token, RECAPTCHA_PRIVATE_KEY)
+        if (result):
+            if (result.success):
+                user_secret_data[
+                    "passed_time"
+                ] = datetime.datetime.utcnow().timestamp()
 
-                    user_data["secret"] = user_secret_data
-                    with suppress(TelegramAPIError):
-                        tasks = [
-                            [
-                                *[
-                                    bot.bot.delete_message(chat_id, msg_id)
-                                    for msg_id in msg_ids
-                                ],
-                                bot.bot.restrict_chat_member(
-                                    chat_id, validation_model.user_id, UNRESTRICT_ALL
-                                ),
-                            ]
-                            for chat_id, msg_ids in user_data.get("chats", {}).items()
-                        ]
-                        flatten_tasks = list(chain(*tasks)) + [
-                            bot.bot.send_message(
-                                validation_model.user_id,
-                                "Turing test succesfully passed",
-                            )
-                        ]
-                        gather(*flatten_tasks)
+                user_data["secret"] = user_secret_data
 
-                    await storage.user_context.set_data(data=user_data)
+                await cleanup_chat_after_validation(bot.bot, validation_model.user_id, user_data.get('chats', {}))
 
-                    return JSONResponse(  # everything is ok
-                        status_code=200,
-                        content={
-                            "detail": "Now you can close this tab. Or it will close in: {0}",
-                            "redirectTo": bot.bot_link,
-                        },
-                    )
+                await storage.user_context.set_data(data=user_data)
 
-                return JSONResponse(
-                    status_code=400,
+                return JSONResponse(  # everything is ok
+                    status_code=200,
                     content={
-                        "detail": "Can't verify your attempt. Probably you are bot :)",
+                        "detail": "Now you can close this tab. Or it will close in: {0}",
+                        "redirectTo": bot.bot_link,
                     },
                 )
 
             return JSONResponse(
                 status_code=400,
                 content={
-                    "detail": "Something went wrong. Please try later.",
+                    "detail": "Can't verify your attempt. Probably you are bot :)",
                 },
             )
+
+        return JSONResponse(
+            status_code=400,
+            content={
+                "detail": "Something went wrong. Please try later.",
+            },
+        )

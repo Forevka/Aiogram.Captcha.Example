@@ -15,13 +15,14 @@ from web.middleware.captcha_storage_provider import CaptchaStorageProviderMiddle
 
 
 def register_middlewares(app: FastAPI):
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+    if (is_debug()):
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=["*"],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
 
     app.add_middleware(
         BotProviderMiddleware,

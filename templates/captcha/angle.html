@@ -4,20 +4,7 @@
         <link rel="stylesheet" href="https://unpkg.com/rverify@0.1.3/dist/RVerify.min.css"/>
         <script src="https://unpkg.com/rverify@0.1.3/dist/RVerify.js"></script>
 
-        <script>
-            // First, checks if it isn't implemented yet.
-            if (!String.prototype.format) {
-                String.prototype.format = function() {
-                    var args = arguments;
-                    return this.replace(/{(\d+)}/g, function(match, number) { 
-                        return typeof args[number] != 'undefined'
-                        ? args[number]
-                        : match
-                        ;
-                    });
-                };
-            }
-        </script>
+        {% include "partial/string_format_polyfill.j2" %}
 
         <script>
             const userId = {{ user_id }};
@@ -74,6 +61,7 @@
             })
 
         </script>
+        
     </head>
     <body>
         <script>

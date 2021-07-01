@@ -2,6 +2,7 @@ import datetime
 from asyncio import gather
 from contextlib import suppress
 from itertools import chain
+from web.utils.cleanup_chat_after_validation import cleanup_chat_after_validation
 from web.models.angle_validation_model import AngleValidationModel
 
 from fastapi import Depends, Request
@@ -46,23 +47,7 @@ async def validate_angle_page(
     user_secret_data["passed_time"] = datetime.datetime.utcnow().timestamp()
 
     user_data["secret"] = user_secret_data
-    with suppress(TelegramAPIError):
-        tasks = [
-            [
-                *[bot.bot.delete_message(chat_id, msg_id) for msg_id in msg_ids],
-                bot.bot.restrict_chat_member(
-                    chat_id, validation_model.user_id, UNRESTRICT_ALL
-                ),
-            ]
-            for chat_id, msg_ids in user_data.get("chats", {}).items()
-        ]
-        flatten_tasks = list(chain(*tasks)) + [
-            bot.bot.send_message(
-                validation_model.user_id,
-                "Turing test succesfully passed",
-            )
-        ]
-        gather(*flatten_tasks)
+    await cleanup_chat_after_validation(bot.bot, validation_model.user_id, user_data.get('chats', {}))
 
     await storage.user_context.set_data(data=user_data)
 

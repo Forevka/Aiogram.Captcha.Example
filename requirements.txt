@@ -5,3 +5,4 @@ jinja2
 git+git://github.com/aiogram/aiogram/@dev-3.x
 aiohttp
 aioredis==2.0.0a1
+asyncpg

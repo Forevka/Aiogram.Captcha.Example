@@ -1,29 +1,43 @@
-from datetime import datetime, timedelta
-from urllib.parse import quote
+from web.utils.validation_state import ValidationStateEnum
+from web.utils.validate_user_state import validate_user_state
 
 from aiogram import Bot, types
 from aiogram.dispatcher.fsm.context import FSMContext
 from aiogram.dispatcher.fsm.storage.redis import RedisStorage
-from config import RECAPTCHA_ROUTE, HOST, INVALIDATE_STATE_MINUTES, PROXY_PREFIX
-from utils.security import generate_user_secret
+from config import RECAPTCHA_ROUTE
+from utils.security import generate_game_url
 
 
-async def callback_game_recaptcha(query: types.CallbackQuery, captcha_storage: RedisStorage, captcha_state: FSMContext, bot: Bot):
+async def callback_game_recaptcha(
+    query: types.CallbackQuery,
+    captcha_storage: RedisStorage,
+    captcha_state: FSMContext,
+    bot: Bot,
+):
     user = query.from_user
 
-    if (query.message and query.message.reply_to_message):
-        if (user.id != query.message.reply_to_message.from_user.id):
-            return await query.answer('This is not for you.', show_alert=False,)
+    if query.message and query.message.reply_to_message:
+        if user.id != query.message.reply_to_message.from_user.id:
+            return await query.answer(
+                "This is not for you.",
+                show_alert=False,
+            )
 
         user = query.message.reply_to_message.from_user
 
-    user_data = await captcha_storage.get_data(bot, user.id, user.id,)
+    old_user_data = await captcha_state.get_data()
 
-    user_secret_data = user_data.get('secret', {})
+    old_user_public_key = old_user_data["secret"]["public_key"]
 
-    if (user_secret_data.get('passed_time', 0) == 0 or datetime.utcnow() > (datetime.fromtimestamp(user_secret_data.get('passed_time', 0)) + timedelta(minutes=INVALIDATE_STATE_MINUTES))):
-        user_data['secret'] = generate_user_secret()
+    result, user_data = await validate_user_state(
+        captcha_state, old_user_public_key, old_user_data
+    )
 
-    await captcha_storage.set_data(bot, user.id, user.id, user_data,)
-
-    await query.answer(url=f"{HOST}{PROXY_PREFIX}{RECAPTCHA_ROUTE}?user_id={user.id}&first_name={quote(user.first_name)}&public_key={user_data['secret']['public_key']}",)
+    if (result == ValidationStateEnum.NeedToPass):
+        await query.answer(
+            url=generate_game_url(
+                RECAPTCHA_ROUTE, user.id, user.first_name, user_data.user_public_key
+            ),
+        )
+    else:
+        await query.answer("Keep calm, you are not a bot")
