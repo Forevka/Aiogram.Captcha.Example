@@ -25,15 +25,9 @@ async def callback_game_recaptcha(
 
         user = query.message.reply_to_message.from_user
 
-    old_user_data = await captcha_state.get_data()
+    result, user_data = await validate_user_state(captcha_state, "", {})
 
-    old_user_public_key = old_user_data["secret"]["public_key"]
-
-    result, user_data = await validate_user_state(
-        captcha_state, old_user_public_key, old_user_data
-    )
-
-    if (result == ValidationStateEnum.NeedToPass):
+    if (result in {ValidationStateEnum.NeedToPass, ValidationStateEnum.WrongOrigin}):
         await query.answer(
             url=generate_game_url(
                 RECAPTCHA_ROUTE, user.id, user.first_name, user_data.user_public_key
