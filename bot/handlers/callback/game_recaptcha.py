@@ -1,11 +1,12 @@
-from web.utils.validation_state import ValidationStateEnum
-from web.utils.validate_user_state import validate_user_state
-
 from aiogram import Bot, types
 from aiogram.dispatcher.fsm.context import FSMContext
 from aiogram.dispatcher.fsm.storage.redis import RedisStorage
 from config import RECAPTCHA_ROUTE
-from utils.security import generate_game_url
+from utils.security import (
+    generate_game_url,
+    generate_user_secret,
+    is_need_to_pass_captcha,
+)
 
 
 async def callback_game_recaptcha(
@@ -25,12 +26,21 @@ async def callback_game_recaptcha(
 
         user = query.message.reply_to_message.from_user
 
-    result, user_data = await validate_user_state(captcha_state, "", {})
+    user_data = await captcha_state.get_data()
+    user_secret_data = user_data.get("secret", {})
 
-    if (result in {ValidationStateEnum.NeedToPass, ValidationStateEnum.WrongOrigin}):
+    if is_need_to_pass_captcha(user_secret_data):
+        user_secret_data = generate_user_secret()
+        user_data["secret"] = user_secret_data
+
+        await captcha_state.set_data(user_data)
+
         await query.answer(
             url=generate_game_url(
-                RECAPTCHA_ROUTE, user.id, user.first_name, user_data.user_public_key
+                RECAPTCHA_ROUTE,
+                user.id,
+                user.first_name,
+                user_secret_data["public_key"],
             ),
         )
     else:
