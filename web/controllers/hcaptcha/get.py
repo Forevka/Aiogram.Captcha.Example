@@ -7,7 +7,9 @@ from starlette.responses import Response
 from config import (
     HCAPTCHA_PUBLIC_KEY,
 )
-from web.dependency_resolvers.aiogram_fsm_context_to_fastapi import AiogramFSMContext
+from web.dependency_resolvers.aiogram_fsm_context_to_fastapi import (
+    UserRepoResolver,
+)
 from web.templates import templates
 
 
@@ -16,10 +18,12 @@ async def get_hcaptcha_page(
     user_id: int,
     first_name: str,
     public_key: str = "",
-    storage: AiogramFSMContext = Depends(AiogramFSMContext),
+    storage: UserRepoResolver = Depends(UserRepoResolver),
 ) -> Response:
     user_validation_result, data = await validate_user_state(
-        storage.user_context, public_key,
+        storage.user_repo,
+        user_id,
+        public_key,
     )
 
     if user_validation_result == ValidationStateEnum.NeedToPass:

@@ -1,3 +1,5 @@
+from typing import Optional
+from database.models.user_security import UserSecurity
 import hashlib
 from datetime import datetime, timedelta
 from secrets import token_urlsafe
@@ -17,13 +19,10 @@ def calculate_hash(
     return m.digest().hex()
 
 
-def verify_hash(private_key: str, public_key: str, our_hash: str) -> bool:
-    return (
-        calculate_hash(
-            private_key,
-            public_key,
-        )
-        == our_hash
+def verify_hash(private_key: str, user_public_key: str, our_public_key: str) -> bool:
+    return calculate_hash(private_key, user_public_key,) == calculate_hash(
+        private_key,
+        our_public_key,
     )
 
 
@@ -40,13 +39,12 @@ def generate_user_secret() -> dict:
     }
 
 
-def is_need_to_pass_captcha(user_data: dict):
-    if not user_data:
+def is_need_to_pass_captcha(user_data: Optional[UserSecurity]):
+    if not user_data or not user_data.PassedDateTime:
         return True
 
-    passed_at = user_data.get("passed_time", 0)
-    return passed_at == 0 or datetime.utcnow() > (
-        datetime.fromtimestamp(passed_at) + timedelta(minutes=INVALIDATE_STATE_MINUTES)
+    return datetime.utcnow() > (
+        user_data.PassedDateTime + timedelta(minutes=INVALIDATE_STATE_MINUTES)
     )
 
 

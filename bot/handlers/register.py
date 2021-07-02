@@ -8,7 +8,6 @@ from bot.handlers.commands.start import cmd_start
 from bot.handlers.messages.new_chat_members import new_chat_member
 from aiogram import Dispatcher, Router, F
 from typing import Union
-from functools import partial, partialmethod
 
 def register_all(dp: Union[Dispatcher, Router]):
     dp.message.register(

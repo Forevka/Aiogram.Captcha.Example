@@ -1,4 +1,5 @@
 from asyncio import gather
+from database.models.user_captcha_message import UserCaptchaMessage
 
 from aiogram import Bot
 from config import UNRESTRICT_ALL
@@ -15,20 +16,29 @@ async def suppres_coroutine(task: Awaitable, *errors):
 async def cleanup_chat_after_validation(
     bot: Bot,
     user_id: int,
-    chats: Dict[str, List[int]],
+    chats: List[UserCaptchaMessage],
 ):
-    tasks = [
-        [
-            *[bot.delete_message(chat_id, msg_id) for msg_id in msg_ids],
-            bot.restrict_chat_member(chat_id, user_id, UNRESTRICT_ALL),
-        ]
-        for chat_id, msg_ids in chats.items()
-    ]
-    flatten_tasks = list(chain(*tasks)) + [
+    tasks = []
+
+    grouped_chats = set()
+
+    for chat in chats:
+        if chat.ChatId not in grouped_chats:
+            grouped_chats.add(chat.ChatId)
+            tasks.append(
+                bot.restrict_chat_member(chat.ChatId, user_id, UNRESTRICT_ALL)
+            )
+        
+        tasks.append(
+            bot.delete_message(chat.ChatId, chat.UserId)
+        )
+
+
+    tasks.append(
         bot.send_message(
             user_id,
             "Turing test succesfully passed",
         )
-    ]
+    )
 
-    gather(*map(suppres_coroutine, flatten_tasks))
+    gather(*map(suppres_coroutine, tasks))

@@ -5,7 +5,7 @@ from fastapi import Depends, Request
 from starlette.responses import Response
 from random import choice
 
-from web.dependency_resolvers.aiogram_fsm_context_to_fastapi import AiogramFSMContext
+from web.dependency_resolvers.aiogram_fsm_context_to_fastapi import AiogramFSMContext, UserRepoResolver
 from web.templates import templates
 import json
 
@@ -22,10 +22,10 @@ async def get_angle_page(
     user_id: int,
     first_name: str,
     public_key: str = "",
-    storage: AiogramFSMContext = Depends(AiogramFSMContext),
+    storage: UserRepoResolver = Depends(UserRepoResolver),
 ) -> Response:
     user_validation_result, data = await validate_user_state(
-        storage.user_context, public_key,
+        storage.user_repo, user_id, public_key,
     )
 
     if user_validation_result == ValidationStateEnum.NeedToPass:

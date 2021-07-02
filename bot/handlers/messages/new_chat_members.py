@@ -1,8 +1,11 @@
+from database.models.common.user_chat_message import UserChatMessage
+from database.repository.user_repository import UserRepository
 from aiogram import Bot, types
-from aiogram.dispatcher.fsm.storage.redis import RedisStorage
 from utils.security import is_need_to_pass_captcha
 from datetime import datetime, timedelta
 from config import (
+    CaptchaType,
+    MessageType,
     RESTRICT_ALL,
 )
 import html
@@ -10,7 +13,9 @@ from asyncio import gather
 
 
 async def new_chat_member(
-    message: types.Message, captcha_storage: RedisStorage, bot: Bot
+    message: types.Message,
+    bot: Bot,
+    user_repo: UserRepository,
 ):
     if message.new_chat_members is None:
         return
@@ -20,14 +25,13 @@ async def new_chat_member(
         (i for i in chat_admins if all([i.user.id == bot.id, i.can_restrict_members]))
     ):
         for member in message.new_chat_members:
-            user_data = await captcha_storage.get_data(bot, member.id, member.id)
-            user_secret_data = user_data.get("secret", {})
-            user_chats = user_data.get("chats", {})
+            user_secret_data = await user_repo.get_security(member.id)
+            user_chats = await user_repo.get_chat_messages(member.id, False)
 
             if any(
                 [
                     is_need_to_pass_captcha(user_secret_data),
-                    str(message.chat.id) not in user_chats,
+                    message.chat.id not in [i.ChatId for i in user_chats],
                 ]
             ):
                 hey_msg = await message.answer(
@@ -37,6 +41,7 @@ async def new_chat_member(
                 game_msg = await message.reply_game(
                     "captcha",
                 )
+
                 await bot.restrict_chat_member(
                     message.chat.id,
                     member.id,
@@ -44,19 +49,25 @@ async def new_chat_member(
                     until_date=datetime.utcnow() + timedelta(days=365),
                 )
 
-                user_chats[message.chat.id] = [
-                    hey_msg.message_id,
-                    game_msg.message_id,
+                new_user_chats = [
+                    UserChatMessage(
+                        user_id=member.id,
+                        chat_id=message.chat.id,
+                        message_id=hey_msg.message_id,
+                        message_type=MessageType.Welcome.value,
+                        captcha_type=CaptchaType.Re.value,
+                    ),
+                    UserChatMessage(
+                        user_id=member.id,
+                        chat_id=message.chat.id,
+                        message_id=game_msg.message_id,
+                        message_type=MessageType.Captcha.value,
+                        captcha_type=CaptchaType.Re.value,
+                    ),
                 ]
 
-                user_data["chats"] = user_chats
+                await user_repo.add_chat_captcha(new_user_chats)
 
-                await captcha_storage.set_data(
-                    bot,
-                    member.id,
-                    member.id,
-                    user_data,
-                )
     else:
         gather(
             *[

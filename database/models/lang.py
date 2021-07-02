@@ -1,5 +1,3 @@
-import datetime
-import typing
 from dataclasses import dataclass
 
 
@@ -8,5 +6,5 @@ class Lang:
 	LangId: int
 	Code: str
 
-	__select__ = """ select "LangId", "Code" from Lang"""
+	__select__ = """ select "LangId", "Code" from "Lang" """
 

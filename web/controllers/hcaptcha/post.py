@@ -17,7 +17,7 @@ from config import (
 )
 from aiogram.utils.exceptions.base import TelegramAPIError
 from web.dependency_resolvers.aiogram_bot_to_fastapi import AiogramBot
-from web.dependency_resolvers.aiogram_fsm_context_to_fastapi import AiogramFSMContext
+from web.dependency_resolvers.aiogram_fsm_context_to_fastapi import AiogramFSMContext, UserRepoResolver
 from web.models.recaptcha_siteverify_model import RecaptchaSiteverifyModel
 from web.models.recaptcha_validation_model import RecaptchaValidationModel
 from utils.security import verify_hash
@@ -26,19 +26,18 @@ from utils.security import verify_hash
 async def validate_hcaptcha_page(
     request: Request,
     validation_model: RecaptchaValidationModel,
-    storage: AiogramFSMContext = Depends(AiogramFSMContext),
+    storage: UserRepoResolver = Depends(UserRepoResolver),
     bot: AiogramBot = Depends(AiogramBot),
 ) -> Response:
-    user_data = await storage.user_context.get_data()
-    user_secret_data = user_data.get("secret", {})
+    user_secret_data = await storage.user_repo.get_security(validation_model.user_id)
 
     if not all(
         [
             user_secret_data,
             verify_hash(
-                user_secret_data["private_key"],
+                user_secret_data.PrivateKey,
                 validation_model.public_key,
-                user_secret_data["hash_key"],
+                user_secret_data.PublicKey,
             ),
         ],
     ):
@@ -53,15 +52,16 @@ async def validate_hcaptcha_page(
         result = await client.validate_token(validation_model.token, HCAPTCHA_PRIVATE_KEY)
         if (result):
             if (result.success):
-                user_secret_data[
-                    "passed_time"
-                ] = datetime.datetime.utcnow().timestamp()
+                chats = await storage.user_repo.get_chat_messages(validation_model.user_id, False)
+                await cleanup_chat_after_validation(bot.bot, validation_model.user_id, chats)
+                await storage.user_repo.cleanup_messages(validation_model.user_id,)
 
-                user_data["secret"] = user_secret_data
-
-                await cleanup_chat_after_validation(bot.bot, validation_model.user_id, user_data.get('chats', {}))
-
-                await storage.user_context.set_data(data=user_data)
+                await storage.user_repo.update_security(
+                    validation_model.user_id, 
+                    user_secret_data.PublicKey, 
+                    user_secret_data.PrivateKey, 
+                    datetime.datetime.utcnow(),
+                )
 
                 return JSONResponse(  # everything is ok
                     status_code=200,

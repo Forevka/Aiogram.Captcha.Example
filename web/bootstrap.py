@@ -1,3 +1,4 @@
+from web.middleware.database_provider import DatabaseProviderMiddleware
 from web.controllers.hcaptcha.post import validate_hcaptcha_page
 from web.controllers.hcaptcha.get import get_hcaptcha_page
 from web.controllers.angle.post import validate_angle_page
@@ -15,7 +16,7 @@ from web.middleware.captcha_storage_provider import CaptchaStorageProviderMiddle
 
 
 def register_middlewares(app: FastAPI):
-    if (is_debug()):
+    if is_debug():
         app.add_middleware(
             CORSMiddleware,
             allow_origins=["*"],
@@ -26,6 +27,10 @@ def register_middlewares(app: FastAPI):
 
     app.add_middleware(
         BotProviderMiddleware,
+    )
+
+    app.add_middleware(
+        DatabaseProviderMiddleware,
     )
 
     app.add_middleware(

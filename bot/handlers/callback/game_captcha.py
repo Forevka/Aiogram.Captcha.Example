@@ -1,3 +1,4 @@
+from database.repository.user_repository import UserRepository
 from utils.partialclass import BaseHandlerContextWrapper
 from aiogram import types
 from aiogram.dispatcher.fsm.context import FSMContext
@@ -12,8 +13,8 @@ class GameCaptcha(BaseHandlerContextWrapper[types.CallbackQuery]):
     async def unpack_handle(
         self,
         event: types.CallbackQuery,
-        captcha_state: FSMContext,
         captcha_route: str,
+        user_repo: UserRepository,
     ):
         user = event.from_user
 
@@ -26,21 +27,19 @@ class GameCaptcha(BaseHandlerContextWrapper[types.CallbackQuery]):
 
             user = event.message.reply_to_message.from_user
 
-        user_data = await captcha_state.get_data()
-        user_secret_data = user_data.get("secret", {})
+        user_data = await user_repo.get_security(user.id)
 
-        if is_need_to_pass_captcha(user_secret_data):
-            user_secret_data = generate_user_secret()
-            user_data["secret"] = user_secret_data
+        if is_need_to_pass_captcha(user_data):
+            new_user_data = generate_user_secret()
 
-            await captcha_state.set_data(user_data)
+            await user_repo.update_security(user.id, new_user_data['public_key'], new_user_data['private_key'], None)
 
             await self.event.answer(
                 url=generate_game_url(
                     captcha_route,
                     user.id,
                     user.first_name,
-                    user_secret_data["public_key"],
+                    new_user_data["public_key"],
                 ),
             )
         else:

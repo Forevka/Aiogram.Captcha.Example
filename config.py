@@ -70,3 +70,14 @@ language_map = {
     "ru": "Русский",
     "en": "English",
 }
+
+
+class CaptchaType(Enum):
+    Re = 1
+    H = 2
+    Angle = 3
+
+
+class MessageType(Enum):
+    Welcome = 1
+    Captcha = 2
