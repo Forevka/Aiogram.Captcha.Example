@@ -30,7 +30,7 @@ async def cleanup_chat_after_validation(
             )
         
         tasks.append(
-            bot.delete_message(chat.ChatId, chat.UserId)
+            bot.delete_message(chat.ChatId, chat.MessageId)
         )
 
 
