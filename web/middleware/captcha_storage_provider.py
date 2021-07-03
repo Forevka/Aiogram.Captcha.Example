@@ -1,6 +1,5 @@
-from typing import Awaitable, Callable, Optional
+from typing import Awaitable, Callable
 
-from aiogram.dispatcher.fsm.context import FSMContext
 from aiogram.dispatcher.fsm.storage.redis import RedisStorage
 from aioredis import Redis
 from config import REDIS_HOST

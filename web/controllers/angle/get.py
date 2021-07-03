@@ -5,7 +5,7 @@ from fastapi import Depends, Request
 from starlette.responses import Response
 from random import choice
 
-from web.dependency_resolvers.aiogram_fsm_context_to_fastapi import AiogramFSMContext, UserRepoResolver
+from web.dependency_resolvers.aiogram_fsm_context_to_fastapi import UserRepoResolver
 from web.templates import templates
 import json
 

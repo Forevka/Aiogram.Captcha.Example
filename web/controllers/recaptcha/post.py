@@ -1,24 +1,17 @@
 import datetime
-from asyncio import gather
-from contextlib import suppress
-from itertools import chain
 from third_party.captcha.client import CaptchaClient
 
 from yarl import URL
 from web.utils.cleanup_chat_after_validation import cleanup_chat_after_validation
 
-import aiohttp
 from fastapi import Depends, Request
 from starlette.responses import JSONResponse, Response
 
 from config import (
     RECAPTCHA_PRIVATE_KEY,
-    UNRESTRICT_ALL,
 )
-from aiogram.utils.exceptions.base import TelegramAPIError
 from web.dependency_resolvers.aiogram_bot_to_fastapi import AiogramBot
-from web.dependency_resolvers.aiogram_fsm_context_to_fastapi import AiogramFSMContext, UserRepoResolver
-from web.models.recaptcha_siteverify_model import RecaptchaSiteverifyModel
+from web.dependency_resolvers.aiogram_fsm_context_to_fastapi import UserRepoResolver
 from web.models.recaptcha_validation_model import RecaptchaValidationModel
 from utils.security import verify_hash
 

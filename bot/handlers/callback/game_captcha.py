@@ -1,7 +1,6 @@
 from database.repository.user_repository import UserRepository
 from utils.partialclass import BaseHandlerContextWrapper
 from aiogram import types
-from aiogram.dispatcher.fsm.context import FSMContext
 from utils.security import (
     generate_game_url,
     generate_user_secret,

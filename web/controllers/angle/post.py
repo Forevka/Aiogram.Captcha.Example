@@ -1,17 +1,10 @@
 import datetime
-from asyncio import gather
-from contextlib import suppress
-from itertools import chain
 from web.utils.cleanup_chat_after_validation import cleanup_chat_after_validation
 from web.models.angle_validation_model import AngleValidationModel
 
 from fastapi import Depends, Request
 from starlette.responses import JSONResponse, Response
 
-from config import (
-    UNRESTRICT_ALL,
-)
-from aiogram.utils.exceptions.base import TelegramAPIError
 from web.dependency_resolvers.aiogram_bot_to_fastapi import AiogramBot
 from web.dependency_resolvers.aiogram_fsm_context_to_fastapi import UserRepoResolver
 from utils.security import verify_hash

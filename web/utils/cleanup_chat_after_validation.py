@@ -4,8 +4,7 @@ from database.models.user_captcha_message import UserCaptchaMessage
 from aiogram import Bot
 from config import UNRESTRICT_ALL
 from contextlib import suppress
-from itertools import chain
-from typing import Awaitable, Dict, List
+from typing import Awaitable, List
 
 
 async def suppres_coroutine(task: Awaitable, *errors):

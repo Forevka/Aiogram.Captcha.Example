@@ -12,7 +12,6 @@ from fastapi.responses import HTMLResponse
 
 from config import is_debug
 from web.middleware.bot_provider import BotProviderMiddleware
-from web.middleware.captcha_storage_provider import CaptchaStorageProviderMiddleware
 
 
 def register_middlewares(app: FastAPI):
@@ -31,10 +30,6 @@ def register_middlewares(app: FastAPI):
 
     app.add_middleware(
         DatabaseProviderMiddleware,
-    )
-
-    app.add_middleware(
-        CaptchaStorageProviderMiddleware,
     )
 
 
