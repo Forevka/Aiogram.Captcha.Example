@@ -9,6 +9,7 @@ from web.controllers.recaptcha.post import validate_recaptcha_page
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 
 from config import is_debug
 from web.middleware.bot_provider import BotProviderMiddleware
@@ -83,3 +84,5 @@ def register_routes(app: FastAPI):
 app = FastAPI(
     root_path="" if is_debug() else "/api/captcha",
 )
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
