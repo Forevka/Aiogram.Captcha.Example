@@ -1,5 +1,22 @@
-<body>
-    <h3>Hello, {{ first_name }}</h3>
-    <h3>You have passed test at {{ passed_at }}, you can pass it again in {{ pass_again }}</h3>
-    <h3>UTC Now: {{ current_utc_time }}</h3>
-</body>
+<!DOCTYPE html>
+<html>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <head>
+        {% include "partial/tailwind_css.j2" %}
+    </head>
+
+    <body>
+        <section class="text-gray-600 body-font">
+            <div class="container px-5 py-24 mx-auto">
+                <div class="lg:w-2/3 flex flex-col sm:flex-row sm:items-center items-start mx-auto">
+                    <h1 class="flex-grow sm:pr-16 text-2xl font-medium title-font text-gray-900">{{ first_name }}, you have
+                        passed test at {{ passed_at }}, you can pass it again in {{ pass_again }}</h1>
+                    <button
+                        class="flex-shrink-0 text-white bg-indigo-500 border-0 py-2 px-8 focus:outline-none hover:bg-indigo-600 rounded text-lg mt-10 sm:mt-0">
+                        To bot
+                    </button>
+                </div>
+            </div>
+        </section>
+    </body>
+</html>
