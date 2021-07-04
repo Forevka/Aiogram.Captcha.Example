@@ -1,3 +1,5 @@
+from web.controllers.settings.post import settings_post
+from web.controllers.settings.get import get_settings_page
 from web.middleware.database_provider import DatabaseProviderMiddleware
 from web.controllers.hcaptcha.post import validate_hcaptcha_page
 from web.controllers.hcaptcha.get import get_hcaptcha_page
@@ -77,6 +79,21 @@ def register_routes(app: FastAPI):
         "/hcaptcha",
         validate_hcaptcha_page,
         tags=["hCaptcha"],
+        methods=["POST"],
+    )
+
+    app.add_api_route(
+        "/settings",
+        get_settings_page,
+        tags=["Settings"],
+        methods=["GET"],
+        response_class=HTMLResponse,
+    )
+
+    app.add_api_route(
+        "/settings",
+        settings_post,
+        tags=["Settings"],
         methods=["POST"],
     )
 

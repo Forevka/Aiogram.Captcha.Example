@@ -1,3 +1,4 @@
+from bot.handlers.commands.settings import cmd_settings
 from utils.partialclass import partialclass
 from config import ANGLE_ROUTE, HCAPTCHA_ROUTE, RECAPTCHA_ROUTE
 from bot.handlers.callback.game_captcha import GameCaptcha
@@ -36,6 +37,13 @@ def register_all(dp: Union[Dispatcher, Router]):
         cmd_hcaptcha,
         commands={
             "hcaptcha",
+        },
+    )
+
+    dp.message.register(
+        cmd_settings,
+        commands={
+            "settings",
         },
     )
 

@@ -72,12 +72,12 @@ class UserRepository:
 
         await self.conn.executemany(sql, [list(i.dict().values()) for i in messages])
 
-    async def get_chat_messages(self, user_id: int, is_deleted: bool):
+    async def get_chat_messages(self, user_id: int, is_deleted: bool, message_types: List[int],):
         sql = f"""
-        {UserCaptchaMessage.__select__} where "UserId" = $1 and "IsDeleted" = $2
+        {UserCaptchaMessage.__select__} where "UserId" = $1 and "IsDeleted" = $2 and "MessageType" in ({', '.join(map(str, message_types))})
         """
         msgs = await self.conn.fetch(
-            sql, user_id, is_deleted
+            sql, user_id, is_deleted,
         )
 
         return [UserCaptchaMessage(**i) for i in msgs]
@@ -88,6 +88,17 @@ class UserRepository:
         set "IsDeleted" = true,
             "DeletedDateTime" = CURRENT_TIMESTAMP
         where "UserId" = $1
+        """
+
+        await self.conn.execute(sql, user_id,)
+        
+    async def cleanup_concrete_messages(self, user_id: int, message_ids: List[int],):
+        sql = f"""
+        update "UserCaptchaMessage"
+        set "IsDeleted" = true,
+            "DeletedDateTime" = CURRENT_TIMESTAMP
+        where "UserId" = $1
+        and "MessageId" in ({', '.join(map(str, message_ids))})
         """
 
         await self.conn.execute(sql, user_id,)

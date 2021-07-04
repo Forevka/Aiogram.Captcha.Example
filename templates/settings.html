@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <head>
+
+        {% include "partial/string_format_polyfill.j2" %}
+        
+        {% include "partial/tailwind_css.j2" %}
+        
+        {% include "partial/alpine_with_store.j2" %}
+
+        <style>
+            @import url(https://cdnjs.cloudflare.com/ajax/libs/MaterialDesign-Webfont/5.3.45/css/materialdesignicons.min.css);
+            
+            .active\:bg-gray-50:active {
+                --tw-bg-opacity:1;
+                background-color: rgba(249,250,251,var(--tw-bg-opacity));
+            }
+        </style>
+
+        <script>
+            /*SSR*/
+            window.Spruce.store('captcha_data', {
+                captcha_types: {{ captcha_types|safe }},
+                selected_captcha: {{ selected_captcha }},
+                userId: {{ user_id }},
+                chatId: {{ chat_id }},
+                publicKey: "{{ user_public_key }}",
+                isEnabled: {{ "true" if is_enabled else "false" }}
+            })
+
+            /*user side common*/
+            
+            window.Spruce.store('common', {
+                isLoading: false,
+                set changeLoading(value) {
+                    this.isLoading = value;
+                }
+            })
+
+        </script>
+    </head>
+    <body>
+        <div class="min-w-screen min-h-screen bg-gray-200 flex items-center justify-center px-5 py-5">
+            <div class="w-full max-w-6xl mx-auto rounded-xl bg-white shadow-lg p-5 text-black" x-data="app()" x-init="init($refs.wysiwyg)">
+                <h3 class="text-2xl font-bold mb-4">Settings for chat: <span class="text-2xl mb-4">{{chat_name}}</span></h3>
+                <fieldset class="relative z-0 w-full p-px mb-5">
+                    <label class="text-lg font-semibold text-gray-600 py-2">Captcha type</label>
+                    <div class="block pt-3 pb-2 space-x-4" x-data>
+                        <template x-for="captcha_type in $store.captcha_data.captcha_types" :key="captcha_type.id">
+                            <label>
+                                <input
+                                    type="radio"
+                                    name="radio"
+                                    x-bind:value="captcha_type.id"
+                                    class="mr-2 text-black border-2 border-gray-300 focus:border-gray-300 focus:ring-black"
+                                    x-bind:checked="captcha_type.id === $store.captcha_data.selected_captcha"
+                                    x-model="$store.captcha_data.selected_captcha"
+                                />
+                                <span x-text="captcha_type.name"></span>
+                            </label>
+                        </template>
+                    </div>
+                </fieldset>
+                <label class="text-lg font-semibold text-gray-600 py-2">Welcome message</label>
+                <div class="border border-gray-200 overflow-hidden rounded-md">
+                    <div class="w-full flex border-b border-gray-200 text-xl text-gray-600">
+                        <button class="outline-none focus:outline-none border-r border-gray-200 w-10 h-10 hover:text-indigo-500 active:bg-gray-50" @click="format('bold')">
+                            <i class="mdi mdi-format-bold"></i>
+                        </button>
+                        <button class="outline-none focus:outline-none border-r border-gray-200 w-10 h-10 hover:text-indigo-500 active:bg-gray-50" @click="format('italic')">
+                            <i class="mdi mdi-format-italic"></i>
+                        </button>
+                        <button class="outline-none focus:outline-none border-r border-gray-200 w-10 h-10 mr-1 hover:text-indigo-500 active:bg-gray-50" @click="format('underline')">
+                            <i class="mdi mdi-format-underline"></i>
+                        </button>
+                        <button class="outline-none focus:outline-none border-r border-gray-200 w-10 h-10 mr-1 hover:text-indigo-500 active:bg-gray-50" @click="format('strikethrough')">
+                            <i class="mdi mdi-format-strikethrough"></i>
+                        </button>
+                    </div>
+                    <div class="w-full">
+                        <iframe x-ref="wysiwyg" class="w-full h-96 overflow-y-auto"></iframe>
+                    </div>
+                </div>
+                <button
+                    id="button"
+                    type="button"
+                    class="w-full inline-flex items-center justify-center px-6 py-3 mt-3 text-lg text-white transition-all duration-150 ease-linear rounded-lg shadow outline-none bg-green-500 hover:bg-blue-600 hover:shadow-lg focus:outline-none"
+                    @click="submit()"
+                    x-bind:disabled="$store.common.isLoading"
+                >
+                    <div class="inline-flex items-center justify-center" x-show="$store.common.isLoading">
+                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Loading...</span>
+                    </div>
+                    
+                    <div x-show="!$store.common.isLoading">
+                        <span>Submit</span>
+                    </div>
+              </button>
+            </div>
+        </div>
+        <script>
+            function app() {
+                return {
+                    wysiwyg: null,
+                    init: function(el) {
+                        // Get el
+                        this.wysiwyg = el;
+                        // Add CSS
+                        this.wysiwyg.contentDocument.querySelector('head').innerHTML += `<style>
+                        *, ::after, ::before {box-sizing: border-box;}
+                        :root {tab-size: 4;}
+                        html {line-height: 1.15;text-size-adjust: 100%;}
+                        body {margin: 0px; padding: 1rem 0.5rem;}
+                        body {font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"; white-space: pre-line;}
+                        </style>`;
+                        this.wysiwyg.contentDocument.body.innerHTML += `
+                        {{welcome_message}}
+                        `;
+                        // Make editable
+                        this.wysiwyg.contentDocument.designMode = "on";
+                    },
+                    format: function(cmd, param) {
+                        this.wysiwyg.contentDocument.execCommand(cmd, !1, param||null)
+                    },
+                    submit: function() {
+                        const commonStore = Spruce.store('common')
+                        console.log(commonStore.isLoading)
+                        if (commonStore.isLoading)
+                            return;
+                            
+                        commonStore.isLoading = true;
+                        const http = new XMLHttpRequest();
+                        const url = ''; // our fastapi webapi callback
+                        http.open('POST', '', true);
+
+                        http.setRequestHeader('Content-type', 'application/json');
+
+                        // call a function when the state changes.
+                        http.onreadystatechange = function() 
+                        {
+                            if(http.readyState == 4) 
+                            {
+                                commonStore.isLoading = false;
+                                const responseBody = JSON.parse(http.responseText)
+
+                                if (http.status == 200) 
+                                {
+                                    // document.querySelector('#captcha').remove();
+                                    // here we understand that everything is ok
+
+                                    /*setTimeout(() => {
+                                        setTimeout(() => {
+                                            document.location.href = responseBody.redirectTo;
+                                        }, 100)
+
+                                        window.close();
+                                    }, 1500)*/
+                                }
+
+                            }
+                        }
+
+                        const store = Spruce.store('captcha_data')
+
+                        const params = {
+                            'user_id': store.userId,
+                            'chat_id': store.chatId,
+                            'welcome_message': this.wysiwyg.contentDocument.body.innerHTML,
+                            'public_key': store.publicKey,
+                            'captcha_type': store.selected_captcha
+                        };
+
+                        http.send(JSON.stringify(params));
+                    }
+                }
+            }
+        </script>
+    </body>
+</html>

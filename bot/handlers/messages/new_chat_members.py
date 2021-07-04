@@ -14,7 +14,6 @@ from aiogram import Bot, types
 from utils.security import is_need_to_pass_captcha
 from datetime import datetime, timedelta
 from config import (
-    CaptchaType,
     MessageType,
     RESTRICT_ALL,
     CAPTCHA_ID_TO_NAME,
@@ -84,6 +83,7 @@ async def new_chat_member(
                         ],
                     )
                 )
+                await user_repo.cleanup_messages(member.id,)
 
                 new_user_chats = [
                     UserChatMessage(
@@ -91,14 +91,14 @@ async def new_chat_member(
                         chat_id=message.chat.id,
                         message_id=hey_msg.message_id,
                         message_type=MessageType.Welcome.value,
-                        captcha_type=CaptchaType.Re.value,
+                        captcha_type=chat_settings.CaptchaType,
                     ),
                     UserChatMessage(
                         user_id=member.id,
                         chat_id=message.chat.id,
                         message_id=game_msg.message_id,
                         message_type=MessageType.Captcha.value,
-                        captcha_type=CaptchaType.Re.value,
+                        captcha_type=chat_settings.CaptchaType,
                     ),
                 ]
 

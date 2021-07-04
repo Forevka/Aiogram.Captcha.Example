@@ -2,11 +2,6 @@ from os import getenv
 from aiogram.types.chat_permissions import ChatPermissions
 from enum import Enum
 
-CAPTCHA_ID_TO_NAME = {
-    1: "captcha",
-    2: "hcaptcha",
-    3: "angle",
-}
 
 POEDITOR_ID = int(getenv("POEDITOR_PROJECT_ID", 0))
 POEDITOR_TOKEN = getenv("POEDITOR_TOKEN", "")
@@ -35,6 +30,7 @@ CONNECTION_STRING = getenv("CONNECTION_STRING", "")
 
 INVALIDATE_STATE_MINUTES = 1
 
+BASE_URL = f"{HOST}{PROXY_PREFIX}"
 
 def is_debug() -> bool:
     return ENVIRONMENT == "debug"
@@ -87,3 +83,25 @@ class CaptchaType(Enum):
 class MessageType(Enum):
     Welcome = 1
     Captcha = 2
+    Settings = 3
+
+CAPTCHA_ID_TO_NAME = {
+    CaptchaType.Re.value: "captcha",
+    CaptchaType.H.value: "hcaptcha",
+    CaptchaType.Angle.value: "angle",
+}
+
+AVAILABLE_CAPTCHA_NAME = [
+    {
+        "id": CaptchaType.Re.value,
+        "name": "ReCaptcha",
+    },
+    {
+        "id": CaptchaType.H.value,
+        "name": "HCaptcha",
+    },
+    {
+        "id": CaptchaType.Angle.value,
+        "name": "Angle",
+    },
+]

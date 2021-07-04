@@ -31,7 +31,9 @@ class GameCaptcha(BaseHandlerContextWrapper[types.CallbackQuery]):
         if is_need_to_pass_captcha(user_data):
             new_user_data = generate_user_secret()
 
-            await user_repo.update_security(user.id, new_user_data['public_key'], new_user_data['private_key'], None)
+            await user_repo.update_security(
+                user.id, new_user_data["public_key"], new_user_data["private_key"], None
+            )
 
             await self.event.answer(
                 url=generate_game_url(

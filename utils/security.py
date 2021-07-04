@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from secrets import token_urlsafe
 from urllib.parse import quote
 
-from config import HOST, INVALIDATE_STATE_MINUTES, PROXY_PREFIX
+from config import BASE_URL, INVALIDATE_STATE_MINUTES
 
 
 def calculate_hash(
@@ -47,6 +47,9 @@ def is_need_to_pass_captcha(user_data: Optional[UserSecurity]):
         user_data.PassedDateTime + timedelta(minutes=INVALIDATE_STATE_MINUTES)
     )
 
+def generate_settings_url(user_id: int, chat_id: int, public_key: str):
+    return f"{BASE_URL}/settings?user_id={user_id}&chat_id={chat_id}&public_key={public_key}"
 
-def generate_game_url(route: str, user_id: int, first_name: str, public_key: str):
-    return f"{HOST}{PROXY_PREFIX}{route}?user_id={user_id}&first_name={quote(first_name)}&public_key={public_key}"
+
+def generate_game_url(route: str, user_id: int, first_name: str, public_key: str,):
+    return f"{BASE_URL}{route}?user_id={user_id}&first_name={quote(first_name)}&public_key={public_key}"

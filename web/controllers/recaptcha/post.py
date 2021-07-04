@@ -8,6 +8,7 @@ from fastapi import Depends, Request
 from starlette.responses import JSONResponse, Response
 
 from config import (
+    MessageType,
     RECAPTCHA_PRIVATE_KEY,
 )
 from web.dependency_resolvers.aiogram_bot_to_fastapi import AiogramBot
@@ -42,17 +43,27 @@ async def validate_recaptcha_page(
         )
 
     async with CaptchaClient(URL("https://www.google.com/recaptcha/api/")) as client:
-        result = await client.validate_token(validation_model.token, RECAPTCHA_PRIVATE_KEY)
-        if (result):
-            if (result.success):
-                chats = await storage.user_repo.get_chat_messages(validation_model.user_id, False)
-                await cleanup_chat_after_validation(bot.bot, validation_model.user_id, chats)
-                await storage.user_repo.cleanup_messages(validation_model.user_id,)
+        result = await client.validate_token(
+            validation_model.token, RECAPTCHA_PRIVATE_KEY
+        )
+        if result:
+            if result.success:
+                chats = await storage.user_repo.get_chat_messages(
+                    validation_model.user_id,
+                    False,
+                    [MessageType.Welcome.value, MessageType.Captcha.value],
+                )
+                await cleanup_chat_after_validation(
+                    bot.bot, validation_model.user_id, chats
+                )
+                await storage.user_repo.cleanup_messages(
+                    validation_model.user_id,
+                )
 
                 await storage.user_repo.update_security(
-                    validation_model.user_id, 
-                    user_secret_data.PublicKey, 
-                    user_secret_data.PrivateKey, 
+                    validation_model.user_id,
+                    user_secret_data.PublicKey,
+                    user_secret_data.PrivateKey,
                     datetime.datetime.utcnow(),
                 )
 

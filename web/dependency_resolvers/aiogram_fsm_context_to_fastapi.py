@@ -1,3 +1,5 @@
+from database.repository.chat_repository import ChatRepository
+from database.repository.chat_settings_repository import ChatSettingsRepository
 from aiogram.dispatcher.fsm.context import FSMContext
 from config import TOKEN
 from fastapi import Request
@@ -11,3 +13,5 @@ class AiogramFSMContext:
 class UserRepoResolver:
     def __init__(self, request: Request):
         self.user_repo = UserRepository(request.state.connection)
+        self.chat_repo = ChatRepository(request.state.connection)
+        self.chat_setting_repo = ChatSettingsRepository(request.state.connection)
