@@ -1,5 +1,7 @@
 from asyncio import gather
+from functools import partial
 from database.models.user_captcha_message import UserCaptchaMessage
+from aiogram.utils.exceptions.base import TelegramAPIError
 
 from aiogram import Bot
 from config import UNRESTRICT_ALL
@@ -40,4 +42,4 @@ async def cleanup_chat_after_validation(
         )
     )
 
-    gather(*map(suppres_coroutine, tasks))
+    gather(*map(partial(suppres_coroutine, TelegramAPIError), tasks))
