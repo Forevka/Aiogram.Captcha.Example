@@ -8,18 +8,18 @@ class ChatRepository:
         self.conn = conn
 
     async def get(self, chat_id: int):
-        user = await self.conn.fetchrow(
+        chat = await self.conn.fetchrow(
             f"""{Chat.__select__} where "ChatId" = $1""", chat_id
         )
-        if user:
-            return Chat(**user)
+        if chat:
+            return Chat(**chat)
 
     async def create(self, chat_id: int, username: Optional[str]):
         sql = """
-        insert into "Chat" ("ChatId", "Username") 
-        values($1, $2) 
-        on conflict do nothing 
-        returning "ChatId", "Username" 
+	    select 
+            "ChatId", 
+            "Username" 
+        from create_default_chat($1, $2)
         """
         res = await self.conn.fetchrow(
             sql,
@@ -28,3 +28,4 @@ class ChatRepository:
         )
         if res:
             return Chat(**res)
+    

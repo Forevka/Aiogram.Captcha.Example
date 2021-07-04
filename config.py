@@ -2,6 +2,12 @@ from os import getenv
 from aiogram.types.chat_permissions import ChatPermissions
 from enum import Enum
 
+CAPTCHA_ID_TO_NAME = {
+    1: "captcha",
+    2: "hcaptcha",
+    3: "angle",
+}
+
 POEDITOR_ID = int(getenv("POEDITOR_PROJECT_ID", 0))
 POEDITOR_TOKEN = getenv("POEDITOR_TOKEN", "")
 

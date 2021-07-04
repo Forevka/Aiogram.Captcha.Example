@@ -1,3 +1,13 @@
+from functools import partial
+from typing import cast
+
+from aiogram.utils.exceptions.base import TelegramAPIError
+from web.utils.cleanup_chat_after_validation import (
+    suppres_coroutine,
+)
+from database.models.chat_setting import ChatSetting
+from database.repository.chat_repository import ChatRepository
+from database.repository.chat_settings_repository import ChatSettingsRepository
 from database.models.common.user_chat_message import UserChatMessage
 from database.repository.user_repository import UserRepository
 from aiogram import Bot, types
@@ -7,6 +17,7 @@ from config import (
     CaptchaType,
     MessageType,
     RESTRICT_ALL,
+    CAPTCHA_ID_TO_NAME,
 )
 import html
 from asyncio import gather
@@ -34,12 +45,23 @@ async def new_chat_member(
                     message.chat.id not in [i.ChatId for i in user_chats],
                 ]
             ):
+                chat_settings_repo = ChatSettingsRepository(user_repo.conn)
+                chat_settings = await chat_settings_repo.get(message.chat.id)
+                if not chat_settings:
+                    chat_repo = ChatRepository(user_repo.conn)
+                    await chat_repo.create(message.chat.id, message.chat.username)
+                    chat_settings = cast(
+                        ChatSetting, await chat_settings_repo.get(message.chat.id)
+                    )
+
                 hey_msg = await message.answer(
-                    f'Hey, <a href="tg://user?id={member.id}">{html.escape(member.first_name, quote=False)}</a> please pass the captcha!',
+                    chat_settings.WelcomeMessage.format(
+                        username=f'<a href="tg://user?id={member.id}">{html.escape(member.first_name, quote=False)}</a>',
+                    ),
                     parse_mode="HTML",
                 )
                 game_msg = await message.reply_game(
-                    "captcha",
+                    CAPTCHA_ID_TO_NAME.get(chat_settings.CaptchaType, "captcha"),
                 )
 
                 await bot.restrict_chat_member(
@@ -47,6 +69,20 @@ async def new_chat_member(
                     member.id,
                     RESTRICT_ALL,
                     until_date=datetime.utcnow() + timedelta(days=365),
+                )
+
+                messages_in_this_chat = [
+                    msg for msg in user_chats if msg.ChatId == message.chat.id
+                ]
+
+                gather(
+                    *map(
+                        partial(suppres_coroutine, errors=[TelegramAPIError]),
+                        [
+                            bot.delete_message(message.chat.id, msg.MessageId)
+                            for msg in messages_in_this_chat
+                        ],
+                    )
                 )
 
                 new_user_chats = [
@@ -72,7 +108,8 @@ async def new_chat_member(
         gather(
             *[
                 bot.send_message(
-                    i.user.id, f"Я не администратор в этом чате: {message.chat.id}"
+                    i.user.id,
+                    f"Please promote me to administrator in this chat: {message.chat.id}",
                 )
                 for i in chat_admins
             ]
