@@ -18,14 +18,21 @@ async def cmd_settings(
     bot: Bot,
     user_repo: UserRepository,
 ):
-    new_user_data = generate_user_secret()
+    if message.chat.id == message.from_user.id:
+        return await message.answer(
+            text="Please add me to a group",
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text="Choose group",
+                            url=f"{await cache.cached_link_to_bot(bot)}?startgroup=qwe"
+                        )
+                    ]
+                ]
+            ),
+        )
 
-    await user_repo.update_security(
-        message.from_user.id,
-        new_user_data["public_key"],
-        new_user_data["private_key"],
-        None,
-    )
 
     try:
         await bot.get_chat(message.from_user.id)
@@ -43,6 +50,15 @@ async def cmd_settings(
                 ]
             ),
         )
+
+    new_user_data = generate_user_secret()
+
+    await user_repo.update_security(
+        message.from_user.id,
+        new_user_data["public_key"],
+        new_user_data["private_key"],
+        None,
+    )
 
     msg = await bot.send_message(
         chat_id=message.from_user.id,

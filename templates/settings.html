@@ -9,6 +9,8 @@
         
         {% include "partial/alpine_with_store.j2" %}
 
+        {% include "partial/notifications.html" %}
+
         <style>
             @import url(https://cdnjs.cloudflare.com/ajax/libs/MaterialDesign-Webfont/5.3.45/css/materialdesignicons.min.css);
             
@@ -26,7 +28,8 @@
                 userId: {{ user_id }},
                 chatId: {{ chat_id }},
                 publicKey: "{{ user_public_key }}",
-                isEnabled: {{ "true" if is_enabled else "false" }}
+                isEnabled: {{ "true" if is_enabled else "false" }},
+                welcomeMsg: `{{ welcome_message|trim }}`
             })
 
             /*user side common*/
@@ -104,6 +107,8 @@
             </div>
         </div>
         <script>
+            const store = Spruce.store('captcha_data')
+
             function app() {
                 return {
                     wysiwyg: null,
@@ -118,9 +123,9 @@
                         body {margin: 0px; padding: 1rem 0.5rem;}
                         body {font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"; white-space: pre-line;}
                         </style>`;
-                        this.wysiwyg.contentDocument.body.innerHTML += `
-                        {{welcome_message}}
-                        `;
+                        const store = Spruce.store('captcha_data')
+                        console.log(store)
+                        this.wysiwyg.contentDocument.body.innerHTML = store.welcomeMsg;
                         // Make editable
                         this.wysiwyg.contentDocument.designMode = "on";
                     },
@@ -150,27 +155,20 @@
 
                                 if (http.status == 200) 
                                 {
-                                    // document.querySelector('#captcha').remove();
-                                    // here we understand that everything is ok
-
-                                    /*setTimeout(() => {
-                                        setTimeout(() => {
-                                            document.location.href = responseBody.redirectTo;
-                                        }, 100)
-
-                                        window.close();
-                                    }, 1500)*/
+                                    toasts.createToast('Changes successfully applied', 'success');
+                                    store.publicKey = responseBody.publicKey;
+                                } else if (http.status == 406) {
+                                    toasts.createToast(responseBody.detail, 'warning');
+                                } else {
+                                    toasts.createToast(responseBody.detail, 'error');
                                 }
-
                             }
                         }
-
-                        const store = Spruce.store('captcha_data')
 
                         const params = {
                             'user_id': store.userId,
                             'chat_id': store.chatId,
-                            'welcome_message': this.wysiwyg.contentDocument.body.innerHTML,
+                            'welcome_message': this.wysiwyg.contentDocument.body.innerHTML.trim(),
                             'public_key': store.publicKey,
                             'captcha_type': store.selected_captcha
                         };

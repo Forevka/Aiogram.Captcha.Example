@@ -37,7 +37,7 @@ async def settings_post(
     valid_welcome_msg = sanitize_html(html.unescape(pre))
     if (not valid_welcome_msg):
         return JSONResponse(
-            status_code=400,
+            status_code=406,
             content={
                 "detail": "Message must be not null",
             },
@@ -45,7 +45,7 @@ async def settings_post(
 
     if settings_model.captcha_type not in CAPTCHA_ID_TO_NAME:
         return JSONResponse(
-            status_code=400,
+            status_code=406,
             content={
                 "detail": "Captcha type must be valid value",
             },
@@ -65,9 +65,9 @@ async def settings_post(
         ],
     ):
         return JSONResponse(
-            status_code=400,
+            status_code=403,
             content={
-                "detail": "Can't verify your attempt. Probably you are bot :)",
+                "detail": "Reopen this page through bot.",
             },
         )
     
