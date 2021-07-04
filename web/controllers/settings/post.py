@@ -10,7 +10,7 @@ from starlette.responses import JSONResponse, Response
 from web.dependency_resolvers.aiogram_bot_to_fastapi import AiogramBot
 from web.dependency_resolvers.aiogram_fsm_context_to_fastapi import UserRepoResolver
 import html
-from utils.security import verify_hash
+from utils.security import generate_user_secret, verify_hash
 
 VALID_TAGS = ['b', 'i', 'u', 's']
 
@@ -71,10 +71,16 @@ async def settings_post(
             },
         )
     
-    await storage.user_repo.update_security(settings_model.user_id, settings_model.public_key, user_secret_data.PrivateKey, datetime.datetime.now())
+    new_user_secret_data = generate_user_secret()
+
+    await storage.user_repo.update_security(settings_model.user_id, new_user_secret_data['public_key'], new_user_secret_data['private_key'], datetime.datetime.now())
 
     await storage.chat_setting_repo.update(settings_model.chat_id, settings_model.welcome_message, settings_model.captcha_type, settings_model.user_id)
 
     return JSONResponse(  # everything is ok
         status_code=200,
+        content={
+            "detail": "ok",
+            "publicKey": new_user_secret_data['public_key'],
+        },
     )
