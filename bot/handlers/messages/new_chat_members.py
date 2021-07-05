@@ -36,7 +36,11 @@ async def new_chat_member(
     ):
         for member in message.new_chat_members:
             user_secret_data = await user_repo.get_security(member.id)
-            user_chats = await user_repo.get_chat_messages(member.id, False)
+            user_chats = await user_repo.get_chat_messages(
+                member.id,
+                False,
+                [MessageType.Welcome.value, MessageType.Captcha.value],
+            )
 
             if any(
                 [
@@ -83,7 +87,9 @@ async def new_chat_member(
                         ],
                     )
                 )
-                await user_repo.cleanup_messages(member.id,)
+                await user_repo.cleanup_messages(
+                    member.id,
+                )
 
                 new_user_chats = [
                     UserChatMessage(

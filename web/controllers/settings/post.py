@@ -15,14 +15,13 @@ from utils.security import generate_user_secret, verify_hash
 VALID_TAGS = ['b', 'i', 'u', 's']
 
 def sanitize_html(value):
-
     soup = BeautifulSoup(value, features="html.parser")
 
     for tag in soup.findAll(True):
         if tag.name not in VALID_TAGS:
             tag.extract()
 
-    return soup.renderContents()
+    return soup.encode_contents(encoding="utf-8")
 
 async def settings_post(
     request: Request,
@@ -34,7 +33,7 @@ async def settings_post(
     pre = pre.replace('<br>', '')
     pre = pre.replace('<div>', '\n')
 
-    valid_welcome_msg = sanitize_html(html.unescape(pre))
+    valid_welcome_msg = str(sanitize_html(html.unescape(pre)), encoding="utf-8")
     if (not valid_welcome_msg):
         return JSONResponse(
             status_code=406,
