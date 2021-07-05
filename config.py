@@ -85,6 +85,7 @@ class MessageType(Enum):
     Captcha = 2
     Settings = 3
     ToPrivate = 4
+    UserJoinServiceMessage = 5
 
 CAPTCHA_ID_TO_NAME = {
     CaptchaType.Re.value: "captcha",

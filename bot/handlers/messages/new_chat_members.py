@@ -97,7 +97,7 @@ async def new_chat_member(
                         chat_id=message.chat.id,
                         message_id=hey_msg.message_id,
                         message_type=MessageType.Welcome.value,
-                        captcha_type=chat_settings.CaptchaType,
+                        captcha_type=-1,
                     ),
                     UserChatMessage(
                         user_id=member.id,
@@ -107,6 +107,17 @@ async def new_chat_member(
                         captcha_type=chat_settings.CaptchaType,
                     ),
                 ]
+
+                if chat_settings.IsNeedToDeleteServiceMessage:
+                    new_user_chats.append(
+                        UserChatMessage(
+                            user_id=member.id,
+                            chat_id=message.chat.id,
+                            message_id=message.message_id,
+                            message_type=MessageType.UserJoinServiceMessage.value,
+                            captcha_type=-1,
+                        ),
+                    )
 
                 await user_repo.add_chat_captcha(new_user_chats)
 

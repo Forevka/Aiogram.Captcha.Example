@@ -19,15 +19,17 @@ class ChatSettingsRepository:
         welcome_message: str,
         captcha_type: int,
         modified_by: int,
+        is_need_to_delete_service_message: bool,
     ):
         sql = """
         update "ChatSetting"
         set "CaptchaType" = $1,
                 "WelcomeMessage" = $2,
                 "ModifiedBy" = $3,
-                "ModifiedDateTime" = CURRENT_TIMESTAMP
+                "ModifiedDateTime" = CURRENT_TIMESTAMP,
+                "IsNeedToDeleteServiceMessage" = $5
         where "ChatId" = $4
         """
         await self.conn.execute(
-            sql, captcha_type, welcome_message, modified_by, chat_id
+            sql, captcha_type, welcome_message, modified_by, chat_id, is_need_to_delete_service_message,
         )

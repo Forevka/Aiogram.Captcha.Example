@@ -6,3 +6,4 @@ class SettingsModel(BaseModel):
     chat_id: int
     welcome_message: str
     captcha_type: int
+    is_need_to_delete_service_message: bool

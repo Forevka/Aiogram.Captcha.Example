@@ -93,6 +93,7 @@ async def get_settings_page(
                     "welcome_message": chat_setting.WelcomeMessage,
                     "captcha_types": AVAILABLE_CAPTCHA_NAME,
                     "selected_captcha": chat_setting.CaptchaType,
+                    "is_need_to_delete_service_message": chat_setting.IsNeedToDeleteServiceMessage,
                     "is_enabled": chat_setting.IsEnabled,
                     "user_id": user_id,
                     "chat_id": chat_id,
