@@ -1,4 +1,4 @@
-from config import CaptchaType, MessageType
+from config import MessageType
 from database.models.common.user_chat_message import UserChatMessage
 from aiogram.client.bot import Bot
 from aiogram.types.inline_keyboard_markup import InlineKeyboardMarkup
@@ -35,9 +35,9 @@ async def cmd_settings(
 
 
     try:
-        await bot.get_chat(message.from_user.id)
+        await bot.send_chat_action(message.from_user.id, 'typing')
     except TelegramAPIError:
-        await message.answer(
+        await message.reply(
             text="Please open chat with bot and write /start to him",
             reply_markup=InlineKeyboardMarkup(
                 inline_keyboard=[
