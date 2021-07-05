@@ -9,6 +9,7 @@ from starlette.responses import JSONResponse, Response
 
 from config import (
     HCAPTCHA_PRIVATE_KEY,
+    MessageType,
 )
 from web.dependency_resolvers.aiogram_bot_to_fastapi import AiogramBot
 from web.dependency_resolvers.aiogram_fsm_context_to_fastapi import UserRepoResolver
@@ -45,7 +46,11 @@ async def validate_hcaptcha_page(
         result = await client.validate_token(validation_model.token, HCAPTCHA_PRIVATE_KEY)
         if (result):
             if (result.success):
-                chats = await storage.user_repo.get_chat_messages(validation_model.user_id, False)
+                chats = await storage.user_repo.get_chat_messages(
+                    validation_model.user_id, 
+                    False,
+                    [MessageType.Welcome.value, MessageType.Captcha.value],
+                )
                 await cleanup_chat_after_validation(bot.bot, validation_model.user_id, chats)
                 await storage.user_repo.cleanup_messages(validation_model.user_id,)
 

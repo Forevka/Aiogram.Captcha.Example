@@ -1,3 +1,4 @@
+from config import MessageType
 import datetime
 from web.utils.cleanup_chat_after_validation import cleanup_chat_after_validation
 from web.models.angle_validation_model import AngleValidationModel
@@ -35,8 +36,12 @@ async def validate_angle_page(
                 "detail": "Can't verify your attempt. Probably you are bot :)",
             },
         )
-
-    chats = await storage.user_repo.get_chat_messages(validation_model.user_id, False)
+        
+    chats = await storage.user_repo.get_chat_messages(
+        validation_model.user_id, 
+        False,
+        [MessageType.Welcome.value, MessageType.Captcha.value],
+    )
     await cleanup_chat_after_validation(bot.bot, validation_model.user_id, chats)
     await storage.user_repo.cleanup_messages(validation_model.user_id,)
 
