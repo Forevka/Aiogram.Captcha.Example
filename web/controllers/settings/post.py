@@ -16,7 +16,7 @@ VALID_TAGS = ['b', 'i', 'u', 's']
 
 def sanitize_html(value):
 
-    soup = BeautifulSoup(value)
+    soup = BeautifulSoup(value, features="html.parser")
 
     for tag in soup.findAll(True):
         if tag.name not in VALID_TAGS:
@@ -75,7 +75,7 @@ async def settings_post(
 
     await storage.user_repo.update_security(settings_model.user_id, new_user_secret_data['public_key'], new_user_secret_data['private_key'], datetime.datetime.now())
 
-    await storage.chat_setting_repo.update(settings_model.chat_id, settings_model.welcome_message, settings_model.captcha_type, settings_model.user_id)
+    await storage.chat_setting_repo.update(settings_model.chat_id, valid_welcome_msg, settings_model.captcha_type, settings_model.user_id)
 
     return JSONResponse(  # everything is ok
         status_code=200,
