@@ -42,7 +42,7 @@ async def new_chat_member(
                 [MessageType.Welcome.value, MessageType.Captcha.value],
             )
 
-            if any(
+            if all(
                 [
                     is_need_to_pass_captcha(user_secret_data),
                     message.chat.id not in [i.ChatId for i in user_chats],
