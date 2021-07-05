@@ -20,6 +20,7 @@ class ChatSettingsRepository:
         captcha_type: int,
         modified_by: int,
         is_need_to_delete_service_message: bool,
+        is_need_to_delete_service_message_on_leave: bool,
     ):
         sql = """
         update "ChatSetting"
@@ -27,9 +28,10 @@ class ChatSettingsRepository:
                 "WelcomeMessage" = $2,
                 "ModifiedBy" = $3,
                 "ModifiedDateTime" = CURRENT_TIMESTAMP,
-                "IsNeedToDeleteServiceMessage" = $5
+                "IsNeedToDeleteServiceMessage" = $5,
+                "IsNeedToDeleteServiceMessageOnLeave" = $6
         where "ChatId" = $4
         """
         await self.conn.execute(
-            sql, captcha_type, welcome_message, modified_by, chat_id, is_need_to_delete_service_message,
+            sql, captcha_type, welcome_message, modified_by, chat_id, is_need_to_delete_service_message, is_need_to_delete_service_message_on_leave,
         )

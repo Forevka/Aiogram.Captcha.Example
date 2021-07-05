@@ -1,3 +1,4 @@
+from aiogram.types.message import ContentType
 from bot.handlers.commands.settings import cmd_settings
 from utils.partialclass import partialclass
 from config import ANGLE_ROUTE, HCAPTCHA_ROUTE, RECAPTCHA_ROUTE
@@ -47,7 +48,9 @@ def register_all(dp: Union[Dispatcher, Router]):
         },
     )
 
-    dp.message.register(new_chat_member, F.content_type == "new_chat_members")
+    dp.message.register(new_chat_member, F.content_type == ContentType.NEW_CHAT_MEMBERS)
+
+    dp.message.register(new_chat_member, F.content_type == ContentType.LEFT_CHAT_MEMBER)
 
     dp.callback_query.register(
         partialclass(GameCaptcha, captcha_route=RECAPTCHA_ROUTE), F.game_short_name == "captcha"

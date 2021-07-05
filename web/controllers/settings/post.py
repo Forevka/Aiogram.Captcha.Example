@@ -86,6 +86,7 @@ async def settings_post(
         settings_model.captcha_type,
         settings_model.user_id,
         settings_model.is_need_to_delete_service_message,
+        settings_model.is_need_to_delete_service_message_on_leave,
     )
 
     return JSONResponse(  # everything is ok

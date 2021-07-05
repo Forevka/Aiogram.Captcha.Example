@@ -7,3 +7,4 @@ class SettingsModel(BaseModel):
     welcome_message: str
     captcha_type: int
     is_need_to_delete_service_message: bool
+    is_need_to_delete_service_message_on_leave: bool
