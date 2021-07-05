@@ -60,7 +60,7 @@ async def cmd_settings(
         None,
     )
 
-    msg = await bot.send_message(
+    msg_settings = await bot.send_message(
         chat_id=message.from_user.id,
         text=f"Settings for chat {message.chat.title}\nOpen it with linked button\n\n<b>Notice: it would be deleted after opening for security reason</b>",
         reply_markup=InlineKeyboardMarkup(
@@ -80,13 +80,35 @@ async def cmd_settings(
         parse_mode="HTML"
     )
 
+    msg_go_to_private = await message.reply(
+        text=f"Settings menu was sent to private chat.\nPlease open it and follow instructions",
+        reply_markup=InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(
+                        text="To bot",
+                        url=await cache.cached_link_to_bot(bot),
+                    )
+                ]
+            ]
+        ),
+        parse_mode="HTML"
+    )
+
     await user_repo.add_chat_captcha(
         [
             UserChatMessage(
                 user_id=message.from_user.id,
                 chat_id=message.from_user.id,
-                message_id=msg.message_id,
+                message_id=msg_settings.message_id,
                 message_type=MessageType.Settings.value,
+                captcha_type=0,
+            ),
+            UserChatMessage(
+                user_id=message.from_user.id,
+                chat_id=message.from_user.id,
+                message_id=msg_go_to_private.message_id,
+                message_type=MessageType.ToPrivate.value,
                 captcha_type=0,
             ),
             UserChatMessage(

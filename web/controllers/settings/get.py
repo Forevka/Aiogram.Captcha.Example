@@ -72,7 +72,7 @@ async def get_settings_page(
 
             await storage.user_repo.update_security(user_id, new_user_secret_data['public_key'], new_user_secret_data['private_key'], None)
 
-            chat_msgs = await storage.user_repo.get_chat_messages(user_id, False, [MessageType.Settings.value])
+            chat_msgs = await storage.user_repo.get_chat_messages(user_id, False, [MessageType.Settings.value, MessageType.ToPrivate.value,])
 
             gather(
                 *map(
