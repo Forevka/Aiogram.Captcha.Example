@@ -106,7 +106,7 @@ async def cmd_settings(
             ),
             UserChatMessage(
                 user_id=message.from_user.id,
-                chat_id=message.from_user.id,
+                chat_id=message.chat.id,
                 message_id=msg_go_to_private.message_id,
                 message_type=MessageType.ToPrivate.value,
                 captcha_type=0,
