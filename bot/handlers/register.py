@@ -1,7 +1,8 @@
+from bot.handlers.commands.minesweeper import cmd_minesweeper
 from aiogram.types.message import ContentType
 from bot.handlers.commands.settings import cmd_settings
 from utils.partialclass import partialclass
-from config import ANGLE_ROUTE, HCAPTCHA_ROUTE, RECAPTCHA_ROUTE
+from config import ANGLE_ROUTE, HCAPTCHA_ROUTE, MINESWEEPER_ROUTE, RECAPTCHA_ROUTE
 from bot.handlers.callback.game_captcha import GameCaptcha
 from bot.handlers.commands.hcaptcha import cmd_hcaptcha
 from bot.handlers.commands.angle import cmd_angle
@@ -39,6 +40,13 @@ def register_all(dp: Union[Dispatcher, Router]):
         commands={
             "hcaptcha",
         },
+    ) 
+    
+    dp.message.register(
+        cmd_minesweeper,
+        commands={
+            "minesweeper",
+        },
     )
 
     dp.message.register(
@@ -60,4 +68,7 @@ def register_all(dp: Union[Dispatcher, Router]):
     )
     dp.callback_query.register(
         partialclass(GameCaptcha, captcha_route=HCAPTCHA_ROUTE), F.game_short_name == "hcaptcha"
+    )
+    dp.callback_query.register(
+        partialclass(GameCaptcha, captcha_route=MINESWEEPER_ROUTE), F.game_short_name == "minesweeper"
     )

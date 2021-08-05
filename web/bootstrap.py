@@ -1,3 +1,5 @@
+from web.controllers.minesweeper.post import validate_minesweeper_page
+from web.controllers.minesweeper.get import get_minesweeper_page
 from web.controllers.settings.post import settings_post
 from web.controllers.settings.get import get_settings_page
 from web.middleware.database_provider import DatabaseProviderMiddleware
@@ -79,6 +81,21 @@ def register_routes(app: FastAPI):
         "/hcaptcha",
         validate_hcaptcha_page,
         tags=["hCaptcha"],
+        methods=["POST"],
+    )
+
+    app.add_api_route(
+        "/minesweeper",
+        get_minesweeper_page,
+        tags=["minesweeper"],
+        methods=["GET"],
+        response_class=HTMLResponse,
+    )
+
+    app.add_api_route(
+        "/minesweeper",
+        validate_minesweeper_page,
+        tags=["minesweeper"],
         methods=["POST"],
     )
 
